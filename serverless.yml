@@ -42,6 +42,19 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+    loanCacheTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-loanCacheTable-${opt:stage}
+        AttributeDefinitions:
+          - AttributeName: loan_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: loan_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5    
   
   Outputs:
     UserCacheTableArn:
@@ -49,9 +62,16 @@ resources:
       Value: ${self:custom.TableArns.userCacheTable}
       Export:
         Name: ${self:service}:${opt:stage}:UserCacheTableArn
+    LoanCacheTableArn:
+      Description: Arn of Loan Cache Table
+      Value: ${self:custom.TableArns.loanCacheTable}
+      Export:
+        Name: ${self:service}:${opt:stage}:LoanCacheTableArn
 
 custom:
   TableArns:
     userCacheTable:
       "Fn::GetAtt": [userCacheTable, Arn]
+    loanCacheTable:
+      "Fn::GetAtt": [loanCacheTable, Arn]
 
