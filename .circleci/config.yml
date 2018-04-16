@@ -1,0 +1,115 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/node:7.10
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - dependencies-cache-{{ checksum "package.json" }}
+            - dependencies-cache
+      - run:
+          name: Setup CodeClimate test-reporter
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+      - run:
+          name: Install Serverless CLI and dependencies
+          command: |
+            sudo npm i -g serverless
+            npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: dependencies-cache-{{ checksum "package.json" }}
+      - run:
+          name: Run Tests with Coverage
+          command: |
+            ./cc-test-reporter before-build
+            npm test
+            ./cc-test-reporter after-build --exit-code $?
+  deploy-staging:
+    docker:
+      - image: circleci/node:7.10
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - dependencies-cache-{{ checksum "package.json" }}
+            - dependencies-cache
+      - run:
+          name: Install Serverless CLI and dependencies
+          command: |
+            sudo npm i -g serverless
+            npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: dependencies-cache-{{ checksum "package.json" }}
+      - run:
+          name: Deploy to Staging environment
+          command: |
+            sls deploy --stage stg --region eu-west-2
+  deploy-production:
+    docker:
+      - image: circleci/node:7.10
+        environment:
+          AWS_PROFILE: prod
+    steps:
+      - checkout
+      - run:
+          name: Setup AWS production credentials
+          command: |
+            mkdir -p /home/circleci/.aws
+            cat >> /home/circleci/.aws/credentials << EOF
+
+            [prod]
+            aws_access_key_id = ${AWS_PRODUCTION_ACCESS_KEY_ID}
+            aws_secret_access_key = ${AWS_PRODUCTION_SECRET_ACCESS_KEY}
+            EOF
+      - restore_cache:
+          keys:
+            - dependencies-cache-{{ checksum "package.json" }}
+            - dependencies-cache
+      - run:
+          name: Install Serverless CLI and dependencies
+          command: |
+            sudo npm i -g serverless
+            npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: dependencies-cache-{{ checksum "package.json" }}
+      - run:
+          name: Deploy to Production environment
+          command: |
+            echo ${AWS_PROFILE}
+            sls deploy --stage prod --region eu-west-2
+workflows:
+  version: 2
+  serverless-workflow:
+    jobs:
+      - build
+      - deploy-staging:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+      - request-prod-deploy:
+          type: approval
+          requires:
+            - deploy-staging
+          filters:
+            branches:
+              only:
+                - master
+      - deploy-production:
+          requires:
+            - request-prod-deploy
+          filters:
+            branches:
+              only:
+                - master
