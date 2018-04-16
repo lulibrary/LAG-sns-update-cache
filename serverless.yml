@@ -26,3 +26,32 @@ provider:
 functions:
   hello:
     handler: src/handler.handle
+
+resources:
+  Resources:
+    userCacheTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:service}-userCacheTable-${opt:stage}
+        AttributeDefinitions:
+          - AttributeName: user_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: user_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+  
+  Outputs:
+    UserCacheTableArn:
+      Description: Arn of User Cache Table
+      Value: ${self:custom.TableArns.userCacheTable}
+      Export:
+        Name: ${self:service}:${opt:stage}:UserCacheTableArn
+
+custom:
+  TableArns:
+    userCacheTable:
+      "Fn::GetAtt": [userCacheTable, Arn]
+
