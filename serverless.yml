@@ -42,3 +42,16 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+  
+  Outputs:
+    UserCacheTableArn:
+      Description: Arn of User Cache Table
+      Value: ${self:custom.TableArns.userCacheTable}
+      Export:
+        Name: ${self:service}:${opt:stage}:UserCacheTableArn
+
+custom:
+  TableArns:
+    userCacheTable:
+      "Fn::GetAtt": [userCacheTable, Arn]
+
