@@ -1,10 +1,14 @@
 const chai = require('chai')
 
-chai.should()
+const should = chai.should()
+
+const handler = require('../src/handler')
 
 describe('handler tests', () => {
-  it('should return true', () => {
-    let test = true
-    test.should.equal(true)
+  it('should return a 200 response', () => {
+    handler.handle(null, null, (err, res) => {
+      should.not.exist(err)
+      res.statusCode.should.equal(200)
+    })
   })
 })
