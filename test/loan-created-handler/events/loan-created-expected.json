@@ -1,0 +1,15 @@
+{
+  "renewable": false,
+  "loan_status": "ACTIVE",
+  "due_date": "2018-02-23T14:10:06Z",
+  "expiry_date": 1519395006,
+  "item_barcode": "12345",
+  "user_id": "LBAAJH",
+  "loan_id": "18263808770001221",
+  "process_status": "NORMAL",
+  "mms_id": "9919045950001221",
+  "title": "Journey",
+  "author": "Trip, A",
+  "description": "book",
+  "call_number": "owncopy"
+}
