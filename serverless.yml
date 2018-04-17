@@ -24,15 +24,21 @@ provider:
   stage: ${opt:stage}
 
 functions:
-  hello:
-    handler: src/handler.handle
+  LoanCreated:
+    handler: src/loan-created/handler.handleLoanCreated
+    events:
+      - sns:
+          arn: ${cf:lag-awh-${opt:stage}.LoanCreatedTopicArn}
+    environment:
+      UserCacheTableName: ${self:custom.TableNames.userCacheTable}
+      LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
 
 resources:
   Resources:
     userCacheTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:service}-userCacheTable-${opt:stage}
+        TableName: ${self:custom.TableNames.userCacheTable}
         AttributeDefinitions:
           - AttributeName: user_id
             AttributeType: S
@@ -45,7 +51,7 @@ resources:
     loanCacheTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:service}-loanCacheTable-${opt:stage}
+        TableName: ${self:custom.TableNames.loanCacheTable}
         AttributeDefinitions:
           - AttributeName: loan_id
             AttributeType: S
@@ -74,4 +80,7 @@ custom:
       "Fn::GetAtt": [userCacheTable, Arn]
     loanCacheTable:
       "Fn::GetAtt": [loanCacheTable, Arn]
+  TableNames:
+    userCacheTable: ${self:service}-userCacheTable-${opt:stage}
+    loanCacheTable: ${self:service}-loanCacheTable-${opt:stage}
 
