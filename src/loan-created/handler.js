@@ -5,23 +5,30 @@ const User = require('@lulibrary/lag-alma-utils/src/user')
 const Loan = require('@lulibrary/lag-alma-utils/src/loan')
 
 module.exports.handle = (event, context, callback) => {
-  const loanData = extractMessageData(event)
+  let loanData
 
-  Promise.all([
-    updateLoan(loanData),
-    updateUser(loanData)
-  ]).then(() => {
-    callback(null, `Loan ${loanData.item_loan.loan_id} successfully updated with event ${loanData.event.value}`)
-  }).catch(e => {
-    callback(e)
-  })
+  Promise.resolve()
+    .then(() => {
+      loanData = extractMessageData(event)
+    })
+    .then(() => {
+      return Promise.all([
+        updateLoan(loanData),
+        updateUser(loanData)
+      ])
+    })
+    .then(() => {
+      callback(null, `Loan ${loanData.item_loan.loan_id} successfully updated with event ${loanData.event.value}`)
+    }).catch(e => {
+      callback(e)
+    })
 }
 
 const extractMessageData = (event) => {
   try {
     return JSON.parse(event.Records[0].Sns.Message)
   } catch (e) {
-    throw new Error('Cannot parse SNS message')
+    throw new Error('Could not parse SNS message')
   }
 }
 
@@ -45,12 +52,5 @@ const updateUser = (loanData) => {
   return eventUser.getData()
     .then(() => {
       return eventUser.addLoan(loanID).save()
-    })
-    .catch(e => {
-      if (e.message === 'No matching record found') {
-        console.log('Must update cache with full user data')
-      } else {
-        throw e
-      }
     })
 }

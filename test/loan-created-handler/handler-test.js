@@ -1,10 +1,11 @@
-const AWS_MOCK = require('aws-sdk-mock')
 const sinon = require('sinon')
 const sandbox = sinon.sandbox.create()
 
 const chai = require('chai')
-const sinon_chai = require('sinon-chai')
-chai.use(sinon_chai)
+const sinonChai = require('sinon-chai')
+const chaiAsPromised = require('chai-as-promised')
+chai.use(sinonChai)
+chai.use(chaiAsPromised)
 const should = chai.should()
 const expect = chai.expect
 
@@ -12,12 +13,10 @@ const TestEvents = {
   LoanCreated: require('./events/loan-created-event.json')
 }
 
-const ExpectedPuts = {
-  LoanCreated: require('./events/loan-created-expected.json')
-}
-
 const rewire = require('rewire')
-const Utils = require('@lulibrary/lag-alma-utils')
+
+// For use when the User and Loan classes are exported by the Utils entry point
+// const Utils = require('@lulibrary/lag-alma-utils')
 
 const User = require('@lulibrary/lag-alma-utils/src/user')
 const Loan = require('@lulibrary/lag-alma-utils/src/loan')
@@ -32,69 +31,171 @@ describe('loan updated lambda tests', () => {
 
   describe('SNS event tests', () => {
     it('should callback with a success message if the event is valid', (done) => {
+      // stub calls to User and Loan class
       sandbox.stub(Loan.prototype, 'save').resolves(true)
       sandbox.stub(User.prototype, 'getData').resolves(true)
       sandbox.stub(User.prototype, 'save').resolves(true)
 
       LoanUpdated.handle(TestEvents.LoanCreated, null, (err, data) => {
+        should.not.exist(err)
         data.should.equal('Loan 18263808770001221 successfully updated with event LOAN_CREATED')
+        done()
+      })
+    })
+
+    it('should callback with an error if updateLoan is rejected', (done) => {
+      // stub calls made by updateUser, ensure it resolves
+      sandbox.stub(User.prototype, 'getData').resolves(true)
+      sandbox.stub(User.prototype, 'save').resolves(true)
+
+      // Stub calls made by updateLoan, ensure it rejects
+      sandbox.stub(Loan.prototype, 'save').rejects(new Error('Update Loan failed'))
+
+      LoanUpdated.handle(TestEvents.LoanCreated, null, (err, data) => {
+        should.not.exist(data)
+        err.should.be.an.instanceOf(Error)
+        err.message.should.equal('Update Loan failed')
+        done()
+      })
+    })
+
+    it('should callback with an error if updateLoan is rejected', (done) => {
+      // stub calls made by updateUser, ensure it rejects
+      sandbox.stub(User.prototype, 'getData').resolves(true)
+      sandbox.stub(User.prototype, 'save').rejects(new Error('Update User failed'))
+
+      // Stub calls made by updateLoan, ensure it resolves
+      sandbox.stub(Loan.prototype, 'save').resolves(true)
+
+      LoanUpdated.handle(TestEvents.LoanCreated, null, (err, data) => {
+        should.not.exist(data)
+        err.should.be.an.instanceOf(Error)
+        err.message.should.equal('Update User failed')
+        done()
+      })
+    })
+
+    it('should callback with an error if extractMessageData throws an error', (done) => {
+      const testMessage = {
+        Records: [{}]
+      }
+
+      LoanUpdated.handle(testMessage, null, (err, data) => {
+        should.not.exist(data)
+        err.should.be.an.instanceOf(Error)
+        err.message.should.equal('Could not parse SNS message')
         done()
       })
     })
   })
 
-  describe('update user tests', () => {
+  describe('update user method tests', () => {
     it('should call the getData method', () => {
-      getDataStub = sandbox.stub(User.prototype, 'getData')
-      getDataStub.returns(Promise.resolve())
+      // stub calls to User class
+      let getDataStub = sandbox.stub(User.prototype, 'getData')
+      let addLoanStub = sandbox.stub(User.prototype, 'addLoan')
+      let saveStub = sandbox.stub(User.prototype, 'save')
 
-      LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan'} })
-        .catch(e => {})
-      getDataStub.should.have.been.calledOnce
+      getDataStub.resolves(true)
+      addLoanStub.returns({
+        save: saveStub
+      })
+      saveStub.resolves(true)
+
+      return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan' } })
+        .then(() => {
+          getDataStub.should.have.been.calledOnce
+        })
     })
 
-    it('should call the addLoan method with the loan id', () => {
-      getDataStub = sandbox.stub(User.prototype, 'getData')
+    it('should call the addLoan method with the loan id if a matching record is found', () => {
+      let getDataStub = sandbox.stub(User.prototype, 'getData')
       getDataStub.returns(Promise.resolve())
 
-      addLoanStub = sandbox.stub(User.prototype, 'addLoan')
+      let addLoanStub = sandbox.stub(User.prototype, 'addLoan')
       addLoanStub.returns(Promise.resolve())
 
-      return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan'} })
+      return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan' } })
         .catch(e => {
           addLoanStub.should.have.been.calledWith('a loan')
         })
     })
 
-    // describe('', () => {
-    //   let messageStub = sandbox.stub()
-    //   let urlStub = sinon.stub()
+    it('should be rejected with an error if getData is rejected', () => {
+      let getDataStub = sandbox.stub(User.prototype, 'getData')
+      getDataStub.rejects(new Error('No matching user record exists'))
 
-    //   before(() => {
-    //     messageStub.callsArgWith(1, null, true)
-    //     urlStub.callsArgWith(1, null, { QueueUrl: 'a queue' })
-    //     AWS_MOCK.mock('SQS', 'getQueueUrl', urlStub)
-    //     AWS_MOCK.mock('SQS', 'sendMessage', messageStub)
-    //     AWS_MOCK.mock('DynamoDB.DocumentClient', 'get', {})
-    //   })
-
-    //   it('should call SQS sendMessage if no user record is found in the cache', () => {
-    //     return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan'} })
-    //       .then((data) => {
-    //         messageStub.should.have.been.calledWith({
-    //           MessageBody: 'a user',
-    //           QueueUrl: 'a queue'
-    //         })
-    //       })
-    //   })
-
-    //   after(() => {
-    //     AWS_MOCK.restore('SQS')
-    //     AWS_MOCK.restore('DynamoDB')
-    //   })
-    // })
+      return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan' } })
+        .should.eventually.be.rejectedWith('No matching user record exists')
+        .and.should.eventually.be.an.instanceOf(Error)
+    })
   })
 
-  describe('update loan method', () => {
+  describe('update loan method tests', () => {
+    it('should call the populate method with the correct parameters', () => {
+      // stub calls to Loan class
+      const populateStub = sandbox.stub(Loan.prototype, 'populate')
+      const addExpiryStub = sandbox.stub(Loan.prototype, 'addExpiryDate')
+
+      // chain stubs together
+      populateStub.returns({
+        addExpiryDate: addExpiryStub
+      })
+
+      addExpiryStub.returns({
+        save: sandbox.stub(Loan.prototype, 'save').resolves(true)
+      })
+
+      const expected = {
+        loan_id: 'a loan',
+        user_id: 'a user'
+      }
+
+      return LoanUpdated.__get__('updateLoan')({ item_loan: { loan_id: 'a loan', user_id: 'a user' } })
+        .then(() => {
+          populateStub.should.have.been.calledWith(expected)
+        })
+    })
+  })
+
+  describe('extract message data tests', () => {
+    it('should return parses JSON if the input is valid', () => {
+      const testMessage = {
+        Records: [{
+          Sns: {
+            Message: '{"event":"test event","loan_id":"a loan","user_id":"a user"}'
+          }
+        }]
+      }
+
+      const expected = {
+        event: 'test event',
+        loan_id: 'a loan',
+        user_id: 'a user'
+      }
+
+      expect(() => LoanUpdated.__get__('extractMessageData')(testMessage)).to.not.throw()
+      LoanUpdated.__get__('extractMessageData')(testMessage).should.deep.equal(expected)
+    })
+
+    it('should throw an error if the JSON is malformed', () => {
+      const testMessage = {
+        Records: [{
+          Sns: {
+            Message: '{event":"test event","loan_id":"a loan","user_id":"a user"}'
+          }
+        }]
+      }
+
+      expect(() => LoanUpdated.__get__('extractMessageData')(testMessage)).to.throw('Could not parse SNS message')
+    })
+
+    it('should throw an error if there is no message', () => {
+      const testMessage = {
+        Records: [{}]
+      }
+
+      expect(() => LoanUpdated.__get__('extractMessageData')(testMessage)).to.throw('Could not parse SNS message')
+    })
   })
 })
