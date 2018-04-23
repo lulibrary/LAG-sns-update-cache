@@ -21,6 +21,9 @@ const rewire = require('rewire')
 const User = require('@lulibrary/lag-alma-utils/src/user')
 const Loan = require('@lulibrary/lag-alma-utils/src/loan')
 
+const ItemNotFoundError = require('@lulibrary/lag-utils/src/item-not-found-error')
+const Queue = require('@lulibrary/lag-utils/src/queue')
+
 // Module under test
 const LoanUpdated = rewire('../../src/loan-created/handler')
 
@@ -123,11 +126,23 @@ describe('loan updated lambda tests', () => {
 
     it('should be rejected with an error if getData is rejected', () => {
       let getDataStub = sandbox.stub(User.prototype, 'getData')
-      getDataStub.rejects(new Error('No matching user record exists'))
+      getDataStub.rejects(new Error('DynamoDB broke'))
 
       return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan' } })
-        .should.eventually.be.rejectedWith('No matching user record exists')
+        .should.eventually.be.rejectedWith('DynamoDB broke')
         .and.should.eventually.be.an.instanceOf(Error)
+    })
+
+    it('should call sendMessage on Queue if no user record is found', () => {
+      let getDataStub = sandbox.stub(User.prototype, 'getData')
+      getDataStub.rejects(new ItemNotFoundError('No matching user record exists'))
+      sandbox.stub(Queue.prototype, 'getQueueUrl').resolves('')
+      let sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
+
+      return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan' } })
+        .then(() => {
+          sendMessageStub.should.have.been.calledOnce
+        })
     })
   })
 
@@ -155,6 +170,59 @@ describe('loan updated lambda tests', () => {
         .then(() => {
           populateStub.should.have.been.calledWith(expected)
         })
+    })
+  })
+
+  describe('send user to Queue method tests', () => {
+    before(() => {
+      process.env.UsersQueueName = 'a queue'
+      process.env.UsersQueueOwner = 'an owner'
+    })
+
+    after(() => {
+      delete process.env.UsersQueueName
+      delete process.env.UsersQueueOwner
+    })
+
+    it('should call Queue#getQueueUrl', () => {
+      let getQueueUrlStub = sandbox.stub(Queue.prototype, 'getQueueUrl')
+      getQueueUrlStub.resolves('')
+      sandbox.stub(Queue.prototype, 'sendMessage').resolves()
+
+      return LoanUpdated.__get__('sendUserToQueue')('').then(() => {
+        getQueueUrlStub.should.have.been.calledOnce
+      })
+    })
+
+    it('should be rejected with an error if Queue#getQueueUrl is rejected', () => {
+      sandbox.stub(Queue.prototype, 'getQueueUrl').rejects(new Error('SQS broke'))
+
+      return LoanUpdated.__get__('sendUserToQueue')('a user').should.eventually.be.rejectedWith('SQS broke')
+        .and.should.eventually.be.an.instanceOf(Error)
+    })
+
+    it('should call Queue#sendMessage with the correct user ID', () => {
+      sandbox.stub(Queue.prototype, 'getQueueUrl').resolves()
+      let sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
+
+      return LoanUpdated.__get__('sendUserToQueue')('a user').then(() => {
+        sendMessageStub.should.have.been.calledWith('a user')
+      })
+    })
+
+    it('should be rejected with an error if Queue#sendMessage is rejected', () => {
+      sandbox.stub(Queue.prototype, 'getQueueUrl').resolves()
+      sandbox.stub(Queue.prototype, 'sendMessage').rejects(new Error('SQS broke'))
+
+      return LoanUpdated.__get__('sendUserToQueue')('a user').should.eventually.be.rejectedWith('SQS broke')
+        .and.should.eventually.be.an.instanceOf(Error)
+    })
+
+    it('should be fulfilled if Queue#sendMessage is fulfilled', () => {
+      sandbox.stub(Queue.prototype, 'getQueueUrl').resolves()
+      sandbox.stub(Queue.prototype, 'sendMessage').resolves(true)
+
+      return LoanUpdated.__get__('sendUserToQueue')('a user').should.eventually.be.fulfilled
     })
   })
 
