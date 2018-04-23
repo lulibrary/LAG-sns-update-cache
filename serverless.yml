@@ -32,6 +32,8 @@ functions:
     environment:
       UserCacheTableName: ${self:custom.TableNames.userCacheTable}
       LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
+      UsersQueueName: ''
+      UsersQueueOwner: ''
 
 resources:
   Resources:
