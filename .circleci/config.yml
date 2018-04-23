@@ -24,10 +24,6 @@ jobs:
           paths:
             - node_modules
           key: dependencies-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "package.json" }}
-      - save_cache:
-          paths:
-            - node_modules
-          key: dependencies-cache-{{ .Environment.CACHE_VERSION }}
       - run:
           name: Run Tests with Coverage
           command: |
@@ -53,10 +49,6 @@ jobs:
           paths:
             - node_modules
           key: dependencies-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "package.json" }}
-      - save_cache:
-          paths:
-            - node_modules
-          key: dependencies-cache-{{ .Environment.CACHE_VERSION }}
       - run:
           name: Deploy to Staging environment
           command: |
@@ -92,10 +84,6 @@ jobs:
           paths:
             - node_modules
           key: dependencies-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "package.json" }}
-      - save_cache:
-          paths:
-            - node_modules
-          key: dependencies-cache-{{ .Environment.CACHE_VERSION }}
       - run:
           name: Deploy to Production environment
           command: |
