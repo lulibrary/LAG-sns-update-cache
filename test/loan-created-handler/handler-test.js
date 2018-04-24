@@ -96,15 +96,13 @@ describe('loan updated lambda tests', () => {
       })
     })
 
-    it('should be rejected with an error if the event type is not LOAN_CREATED', () => {
+    it('should be rejected with an error if the event type is not LOAN_CREATED', (done) => {
       const testEvent = {
         Records: [{
           Sns: {
             Message: JSON.stringify({
-              item_loan: {
-                event: {
-                  value: 'NOT_A_VALID_EVENT'
-                }
+              event: {
+                value: 'NOT_A_VALID_EVENT'
               }
             })
           }
@@ -115,6 +113,7 @@ describe('loan updated lambda tests', () => {
         should.not.exist(data)
         err.should.be.an.instanceOf(UnsupportedEventError)
         err.message.should.equal('Event type NOT_A_VALID_EVENT is not supported')
+        done()
       })
     })
   })

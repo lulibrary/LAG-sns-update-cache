@@ -6,7 +6,8 @@ const Loan = require('@lulibrary/lag-alma-utils/src/loan')
 const Queue = require('@lulibrary/lag-utils/src/queue')
 
 const ItemNotFoundError = require('@lulibrary/lag-utils/src/item-not-found-error')
-const UnsupportedEventError = require('../unsupported-event-error')
+const validateEvent = require('../validate-event')
+const extractMessageData = require('../extract-message-data')
 
 const supportedEvents = ['LOAN_CREATED']
 
@@ -29,20 +30,6 @@ module.exports.handle = (event, context, callback) => {
     }).catch(e => {
       callback(e)
     })
-}
-
-const extractMessageData = (event) => {
-  try {
-    return JSON.parse(event.Records[0].Sns.Message)
-  } catch (e) {
-    throw new Error('Could not parse SNS message')
-  }
-}
-
-const validateEvent = (event, validEvents) => {
-  if (!validEvents.includes(event)) {
-    throw new UnsupportedEventError(`Event type ${event} is not supported`)
-  }
 }
 
 const updateLoan = (loanData) => {
