@@ -38,7 +38,7 @@ functions:
     handler: src/loan-returned/handler.handle
     events:
       - sns:
-          arn: ${cf:lag-awh-${opt:stage}.LoanCreatedTopicArn}
+          arn: ${cf:lag-awh-${opt:stage}.LoanReturnedTopicArn}
     environment:
       UserCacheTableName: ${self:custom.TableNames.userCacheTable}
       LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
