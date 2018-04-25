@@ -19,7 +19,18 @@ module.exports.handle = (event, context, callback) => {
       loanData = extractMessageData(event)
       validateEvent(loanData.event.value, supportedEvents)
     })
+    .then(() => {
+      return deleteLoanFromCache(loanData.item_loan.loan_id)
+    })
+    .then(() => {
+      callback(null, `Loan ${loanData.item_loan.loan_id} successfully updated with event ${loanData.event.value}. Loan has been removed from cache`)
+    })
     .catch(e => {
       callback(e)
     })
+}
+
+const deleteLoanFromCache = (loanID) => {
+  const EventLoan = new Loan(loanID, process.env.LoanCacheTableName, process.env.AWS_REGION)
+  return EventLoan.delete()
 }

@@ -8,11 +8,12 @@ const chaiAsPromised = require('chai-as-promised')
 chai.use(sinonChai)
 chai.use(chaiAsPromised)
 const should = chai.should()
-const expect = chai.expect
 
 const rewire = require('rewire')
 
+// Classes used by module
 const UnsupportedEventError = require('../../src/unsupported-event-error')
+const Loan = require('@lulibrary/lag-alma-utils/src/loan')
 
 // Module under test
 const LoanReturned = rewire('../../src/loan-returned/handler')
@@ -26,7 +27,14 @@ describe('loan returned handler tests', () => {
   })
 
   describe('SNS event tests', () => {
-    it('should callback with a success message if the event is properly formed')
+    it('should callback with a success message if the event is properly formed', () => {
+      sandbox.stub(Loan.prototype, 'delete').resolves(true)
+
+      LoanReturned.handle(LoanReturnedEvent, null, (err, data) => {
+        should.not.exist(err)
+        data.should.equal(`Loan 18263808770001221 successfully updated with event LOAN_RETURNED. Loan has been removed from cache`)
+      })
+    })
 
     it('should callback with an error if extractMessageData throws an error', (done) => {
       const testMessage = {
@@ -66,10 +74,12 @@ describe('loan returned handler tests', () => {
   describe('end to end tests', () => {
     before(() => {
       process.env.LoanCacheTableName = 'a loan cache table'
+      process.env.AWS_REGION = 'eu-west-2'
     })
 
     after(() => {
       delete process.env.LoanCacheTableName
+      delete process.env.AWS_REGION
     })
 
     afterEach(() => {
@@ -86,10 +96,36 @@ describe('loan returned handler tests', () => {
 
         deleteStub.should.have.been.calledWith({
           TableName: 'a loan cache table',
-          loan_id: '18263808770001221'
+          Key: {
+            loan_id: '18263808770001221'
+          }
         })
         done()
       })
+    })
+  })
+
+  describe('deleteLoanFromCache method tests', () => {
+    it('should call Loan#delete exactly once', () => {
+      const deleteStub = sandbox.stub(Loan.prototype, 'delete')
+      deleteStub.resolves(true)
+
+      return LoanReturned.__get__('deleteLoanFromCache')('a loan').then(() => {
+        deleteStub.should.have.been.calledOnce
+      })
+    })
+
+    it('should be fulfilled if Loan#delete is fulfilled', () => {
+      sandbox.stub(Loan.prototype, 'delete').resolves(true)
+
+      return LoanReturned.__get__('deleteLoanFromCache')('a loan').should.eventually.be.fulfilled
+    })
+
+    it('should be rejected if Loan#delete is rejected', () => {
+      sandbox.stub(Loan.prototype, 'delete').rejects(new Error('Database error'))
+
+      return LoanReturned.__get__('deleteLoanFromCache')('a loan').should.eventually.be.rejectedWith('Database error')
+        .instanceOf(Error)
     })
   })
 })
