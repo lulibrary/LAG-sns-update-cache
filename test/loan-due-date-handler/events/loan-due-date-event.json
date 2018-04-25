@@ -1,0 +1,31 @@
+{
+  "Records": [
+    {
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "",
+      "EventSource": "aws:sns",
+      "Sns": {
+        "SignatureVersion": "1",
+        "Timestamp": "1970-01-01T00:00:00.000Z",
+        "Signature": "EXAMPLE",
+        "SigningCertUrl": "EXAMPLE",
+        "MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e",
+        "Message": "{\"representation\":null,\"portfolio\":null,\"item\":null,\"id\":\"1452370645077141593\",\"action\":\"LOAN\",\"institution\":{\"desc\":\"Lancaster University\",\"value\":\"44LAN_INST\"},\"time\":\"2018-02-23T11:10:12.005Z\",\"event\":{\"desc\":\"Loan due date changed\",\"value\":\"LOAN_DUE_DATE\"},\"item_loan\":{\"renewable\":false,\"loan_date\":\"2018-02-23T11:10:06.546Z\",\"loan_status\":\"ACTIVE\",\"due_date\":\"2018-02-23T14:10:06Z\",\"item_barcode\":\"12345\",\"user_id\":\"LBAAJH\",\"library\":{\"desc\":\"Lancaster University Library\",\"value\":\"LANUL\"},\"circ_desk\":{\"desc\":\"Circulation Desk\",\"value\":\"DEFAULT_CIRC_DESK\"},\"loan_id\":\"18263808770001221\",\"process_status\":\"NORMAL\",\"mms_id\":\"9919045950001221\",\"title\":\"Journey\",\"author\":\"Trip, A\",\"description\":\"book\",\"location_code\":{\"name\":\"High Demand 3HR\",\"value\":\"SL03\"},\"item_policy\":{\"description\":\"3-hour rolling loan\",\"value\":\"37\"},\"call_number\":\"owncopy\"},\"bib\":null,\"holding\":null}",
+        "MessageAttributes": {
+          "Test": {
+            "Type": "String",
+            "Value": "TestString"
+          },
+          "TestBinary": {
+            "Type": "Binary",
+            "Value": "TestBinary"
+          }
+        },
+        "Type": "Notification",
+        "UnsubscribeUrl": "EXAMPLE",
+        "TopicArn": "",
+        "Subject": "TestInvoke"
+      }
+    }
+  ]
+}
