@@ -58,7 +58,7 @@ resources:
     requestCacheTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.TableNames.requestCacheTable}
+        TableName: ${self:service}-requestCacheTable-${opt:stage}
         AttributeDefinitions:
           - AttributeName: request_id
             AttributeType: S
