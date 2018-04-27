@@ -55,6 +55,19 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5    
+    requestCacheTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.TableNames.requestCacheTable}
+        AttributeDefinitions:
+          - AttributeName: request_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: request_id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
   
   Outputs:
     UserCacheTableArn:
@@ -67,6 +80,11 @@ resources:
       Value: ${self:custom.TableArns.loanCacheTable}
       Export:
         Name: ${self:service}:${opt:stage}:LoanCacheTableArn
+    RequestCacheTableArn:
+      Description: Arn of Request Cache Table
+      Value: ${self:custom.TableArns.requestCacheTable}
+      Export:
+        Name: ${self:service}:${opt:stage}:RequestCacheTableArn
 
 custom:
   TableArns:
@@ -74,4 +92,6 @@ custom:
       "Fn::GetAtt": [userCacheTable, Arn]
     loanCacheTable:
       "Fn::GetAtt": [loanCacheTable, Arn]
+    requestCacheTable:
+      "Fn::GetAtt": [requestCacheTable, Arn]
 
