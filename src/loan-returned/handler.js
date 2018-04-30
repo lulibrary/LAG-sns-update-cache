@@ -31,6 +31,6 @@ module.exports.handle = (event, context, callback) => {
 }
 
 const deleteLoanFromCache = (loanID) => {
-  const EventLoan = new Loan(loanID, process.env.LoanCacheTableName, process.env.AWS_REGION)
+  const EventLoan = new Loan({ id: loanID, tableName: process.env.LoanCacheTableName, region: process.env.AWS_REGION })
   return EventLoan.delete()
 }

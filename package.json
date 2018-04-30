@@ -39,7 +39,7 @@
     "sinon-chai": "^3.0.0"
   },
   "dependencies": {
-    "@lulibrary/lag-alma-utils": "git+ssh://git@github.com/lulibrary/LAG-Alma-Utils.git#v0.1.3",
+    "@lulibrary/lag-alma-utils": "git+ssh://git@github.com/lulibrary/LAG-Alma-Utils.git#v0.2.0",
     "@lulibrary/lag-utils": "git+ssh://git@github.com/lulibrary/LAG-Utils.git#v0.3.1"
   }
 }
