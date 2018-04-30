@@ -35,11 +35,11 @@ module.exports.handle = (event, context, callback) => {
 const updateLoan = (loanData) => {
   const loanID = loanData.item_loan.loan_id
   const loanCacheTable = process.env.LoanCacheTableName
-  const eventLoan = new Loan(loanID, loanCacheTable, process.env.AWS_REGION)
+  const eventLoan = new Loan({ id: loanID, tableName: loanCacheTable, region: process.env.AWS_REGION })
 
   return eventLoan
     .populate(loanData.item_loan)
-    .addExpiryDate()
+    .addExpiryDate('due_date')
     .save()
 }
 
