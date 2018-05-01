@@ -1,0 +1,31 @@
+{
+  "Records": [
+    {
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "",
+      "EventSource": "aws:sns",
+      "Sns": {
+        "SignatureVersion": "1",
+        "Timestamp": "1970-01-01T00:00:00.000Z",
+        "Signature": "EXAMPLE",
+        "SigningCertUrl": "EXAMPLE",
+        "MessageId": "95df01b4-ee98-5cb9-9903-4c221d41eb5e",
+        "Message": "{\"representation\":null,\"portfolio\":null,\"item\":null,\"id\":\"1234567890101112\",\"action\":\"REQUEST\",\"institution\":{\"desc\":\"Lancaster University\",\"value\":\"44LAN_INST\"},\"time\":\"2018-02-23T11:10:12.005Z\",\"event\":{\"desc\":\"Request created\",\"value\":\"REQUEST_CREATED\"},\"user_request\":{\"title\":\"Test title\",\"author\":null,\"description\":null,\"comment\":null,\"request_id\":\"83013520000121\",\"request_type\":\"HOLD\",\"pickup_location\":\"Burns\",\"pickup_location_type\":\"LIBRARY\",\"pickup_location_library\":\"BURNS\",\"material_type\":{\"value\":\"BK\",\"desc\":\"Book\"},\"request_status\":\"NOT_STARTED\",\"place_in_queue\":1,\"request_date\":\"2013-11-12Z\",\"user_primary_id\":\"testuser\"},\"holding\":null}",
+        "MessageAttributes": {
+          "Test": {
+            "Type": "String",
+            "Value": "TestString"
+          },
+          "TestBinary": {
+            "Type": "Binary",
+            "Value": "TestBinary"
+          }
+        },
+        "Type": "Notification",
+        "UnsubscribeUrl": "EXAMPLE",
+        "TopicArn": "",
+        "Subject": "TestInvoke"
+      }
+    }
+  ]
+}
