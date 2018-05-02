@@ -24,7 +24,6 @@ const Loan = require('@lulibrary/lag-alma-utils/src/loan')
 
 const ItemNotFoundError = require('@lulibrary/lag-utils/src/item-not-found-error')
 const UnsupportedEventError = require('../../src/unsupported-event-error')
-const Queue = require('@lulibrary/lag-utils/src/queue')
 
 // Module under test
 const LoanUpdated = rewire('../../src/loan-created/handler')

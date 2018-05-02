@@ -1,11 +1,6 @@
 'use strict'
 
 // const AlmaUtils = require('@lulibrary/lag-alma-utils/src/')
-const User = require('@lulibrary/lag-alma-utils/src/user')
-const Loan = require('@lulibrary/lag-alma-utils/src/loan')
-const Queue = require('@lulibrary/lag-utils/src/queue')
-
-const ItemNotFoundError = require('@lulibrary/lag-utils/src/item-not-found-error')
 const validateEvent = require('../validate-event')
 const extractMessageData = require('../extract-message-data')
 
