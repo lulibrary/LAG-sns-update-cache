@@ -118,140 +118,6 @@ describe('loan updated lambda tests', () => {
     })
   })
 
-  describe('update user method tests', () => {
-    it('should call the getData method', () => {
-      // stub calls to User class
-      let getDataStub = sandbox.stub(User.prototype, 'getData')
-      let addLoanStub = sandbox.stub(User.prototype, 'addLoan')
-      let saveStub = sandbox.stub(User.prototype, 'save')
-
-      getDataStub.resolves(true)
-      addLoanStub.returns({
-        save: saveStub
-      })
-      saveStub.resolves(true)
-
-      return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan' } })
-        .then(() => {
-          getDataStub.should.have.been.calledOnce
-        })
-    })
-
-    it('should call the addLoan method with the loan id if a matching record is found', () => {
-      let getDataStub = sandbox.stub(User.prototype, 'getData')
-      getDataStub.returns(Promise.resolve())
-
-      let addLoanStub = sandbox.stub(User.prototype, 'addLoan')
-      addLoanStub.returns(Promise.resolve())
-
-      return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan' } })
-        .catch(e => {
-          addLoanStub.should.have.been.calledWith('a loan')
-        })
-    })
-
-    it('should be rejected with an error if getData is rejected', () => {
-      let getDataStub = sandbox.stub(User.prototype, 'getData')
-      getDataStub.rejects(new Error('DynamoDB broke'))
-
-      return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan' } })
-        .should.eventually.be.rejectedWith('DynamoDB broke')
-        .and.should.eventually.be.an.instanceOf(Error)
-    })
-
-    it('should call sendMessage on Queue if no user record is found', () => {
-      let getDataStub = sandbox.stub(User.prototype, 'getData')
-      getDataStub.rejects(new ItemNotFoundError('No matching user record exists'))
-      sandbox.stub(Queue.prototype, 'getQueueUrl').resolves('')
-      let sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
-
-      return LoanUpdated.__get__('updateUser')({ item_loan: { user_id: 'a user', loan_id: 'a loan' } })
-        .then(() => {
-          sendMessageStub.should.have.been.calledOnce
-        })
-    })
-  })
-
-  describe('update loan method tests', () => {
-    it('should call the populate method with the correct parameters', () => {
-      // stub calls to Loan class
-      const populateStub = sandbox.stub(Loan.prototype, 'populate')
-      const addExpiryStub = sandbox.stub(Loan.prototype, 'addExpiryDate')
-
-      // chain stubs together
-      populateStub.returns({
-        addExpiryDate: addExpiryStub
-      })
-
-      addExpiryStub.returns({
-        save: sandbox.stub(Loan.prototype, 'save').resolves(true)
-      })
-
-      const expected = {
-        loan_id: 'a loan',
-        user_id: 'a user'
-      }
-
-      return LoanUpdated.__get__('updateLoan')({ item_loan: { loan_id: 'a loan', user_id: 'a user' } })
-        .then(() => {
-          populateStub.should.have.been.calledWith(expected)
-        })
-    })
-  })
-
-  describe('send user to Queue method tests', () => {
-    before(() => {
-      process.env.UsersQueueName = 'a queue'
-      process.env.UsersQueueOwner = 'an owner'
-    })
-
-    after(() => {
-      delete process.env.UsersQueueName
-      delete process.env.UsersQueueOwner
-    })
-
-    it('should call Queue#getQueueUrl', () => {
-      let getQueueUrlStub = sandbox.stub(Queue.prototype, 'getQueueUrl')
-      getQueueUrlStub.resolves('')
-      sandbox.stub(Queue.prototype, 'sendMessage').resolves()
-
-      return LoanUpdated.__get__('sendUserToQueue')('').then(() => {
-        getQueueUrlStub.should.have.been.calledOnce
-      })
-    })
-
-    it('should be rejected with an error if Queue#getQueueUrl is rejected', () => {
-      sandbox.stub(Queue.prototype, 'getQueueUrl').rejects(new Error('SQS broke'))
-
-      return LoanUpdated.__get__('sendUserToQueue')('a user').should.eventually.be.rejectedWith('SQS broke')
-        .and.should.eventually.be.an.instanceOf(Error)
-    })
-
-    it('should call Queue#sendMessage with the correct user ID', () => {
-      sandbox.stub(Queue.prototype, 'getQueueUrl').resolves()
-      let sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
-
-      return LoanUpdated.__get__('sendUserToQueue')('a user').then(() => {
-        sendMessageStub.should.have.been.calledWith('a user')
-      })
-    })
-
-    it('should be rejected with an error if Queue#sendMessage is rejected', () => {
-      sandbox.stub(Queue.prototype, 'getQueueUrl').resolves()
-      sandbox.stub(Queue.prototype, 'sendMessage').rejects(new Error('SQS broke'))
-
-      return LoanUpdated.__get__('sendUserToQueue')('a user').should.eventually.be.rejectedWith('SQS broke')
-        .and.should.eventually.be.an.instanceOf(Error)
-    })
-
-    it('should be fulfilled if Queue#sendMessage is fulfilled', () => {
-      sandbox.stub(Queue.prototype, 'getQueueUrl').resolves()
-      sandbox.stub(Queue.prototype, 'sendMessage').resolves(true)
-
-      return LoanUpdated.__get__('sendUserToQueue')('a user').should.eventually.be.fulfilled
-    })
-  })
-
   describe('extract message data tests', () => {
     it('should return parses JSON if the input is valid', () => {
       const testMessage = {
@@ -297,6 +163,9 @@ describe('loan updated lambda tests', () => {
     before(() => {
       process.env.UserCacheTableName = 'a user cache table'
       process.env.LoanCacheTableName = 'a loan cache table'
+
+      process.env.UsersQueueName = 'a queue name'
+      process.env.UsersQueueOwner = 'a queue owner'
 
       process.env.AWS_REGION = 'eu-west-2'
     })
@@ -385,9 +254,6 @@ describe('loan updated lambda tests', () => {
     })
 
     it('should call SQS publish correctly if the user does not exist in the database', (done) => {
-      process.env.UsersQueueName = 'a queue name'
-      process.env.UsersQueueOwner = 'a queue owner'
-
       let testUserID = 'LBAAJH'
       let testQueueURL = 'http://test.queue.url'
       sandbox.stub(Loan.prototype, 'populate').returns({

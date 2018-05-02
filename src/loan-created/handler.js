@@ -9,10 +9,18 @@ const ItemNotFoundError = require('@lulibrary/lag-utils/src/item-not-found-error
 const validateEvent = require('../validate-event')
 const extractMessageData = require('../extract-message-data')
 
+const updateLoan = require('../helpers/update-loan')
+const updateUser = require('../helpers/update-user')
+
 const supportedEvents = ['LOAN_CREATED']
 
 module.exports.handle = (event, context, callback) => {
   let loanData
+
+  const queueData = {
+    name: process.env.UsersQueueName,
+    owner: process.env.UsersQueueOwner
+  }
 
   Promise.resolve()
     .then(() => {
@@ -21,52 +29,13 @@ module.exports.handle = (event, context, callback) => {
     })
     .then(() => {
       return Promise.all([
-        updateLoan(loanData),
-        updateUser(loanData)
+        updateLoan(loanData, process.env.LoanCacheTableName, process.env.AWS_REGION),
+        updateUser(loanData, queueData)
       ])
     })
     .then(() => {
       callback(null, `Loan ${loanData.item_loan.loan_id} successfully updated with event ${loanData.event.value}`)
     }).catch(e => {
       callback(e)
-    })
-}
-
-const updateLoan = (loanData) => {
-  const loanID = loanData.item_loan.loan_id
-  const loanCacheTable = process.env.LoanCacheTableName
-  const eventLoan = new Loan(loanID, loanCacheTable, process.env.AWS_REGION)
-
-  return eventLoan
-    .populate(loanData.item_loan)
-    .addExpiryDate()
-    .save()
-}
-
-const updateUser = (loanData) => {
-  const loanID = loanData.item_loan.loan_id
-  const userID = loanData.item_loan.user_id
-  const userCacheTable = process.env.UserCacheTableName
-  const eventUser = new User(userID, userCacheTable, process.env.AWS_REGION)
-
-  return eventUser.getData()
-    .then(() => {
-      return eventUser.addLoan(loanID).save()
-    })
-    .catch(e => {
-      if (e instanceof ItemNotFoundError) {
-        return sendUserToQueue(userID)
-      } else {
-        throw e
-      }
-    })
-}
-
-const sendUserToQueue = (userID) => {
-  const usersQueue = new Queue(process.env.UsersQueueName, process.env.UsersQueueOwner)
-
-  return usersQueue.getQueueUrl()
-    .then(() => {
-      return usersQueue.sendMessage(userID)
     })
 }
