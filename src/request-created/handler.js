@@ -9,6 +9,8 @@ const ItemNotFoundError = require('@lulibrary/lag-utils/src/item-not-found-error
 const validateEvent = require('../validate-event')
 const extractMessageData = require('../extract-message-data')
 
+const updateRequest = require('../helpers/update-request')
+
 const supportedEvents = ['REQUEST_CREATED']
 
 module.exports.handle = (event, context, callback) => {
@@ -30,16 +32,6 @@ module.exports.handle = (event, context, callback) => {
     }).catch(e => {
       callback(e)
     })
-}
-
-const updateRequest = (requestData) => {
-  const requestID = requestData.user_request.request_id
-  const requestCacheTable = process.env.RequestCacheTableName
-  const eventRequest = new Request({ id: requestID, tableName: requestCacheTable, region: process.env.AWS_REGION })
-
-  return eventRequest
-    .populate(requestData.user_request)
-    .save()
 }
 
 const updateUser = (requestData) => {
