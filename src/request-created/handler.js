@@ -12,21 +12,7 @@ const supportedEvents = ['REQUEST_CREATED']
 module.exports.handle = (event, context, callback) => {
   let requestData
 
-  let resourceData = {
-    region: process.env.AWS_REGION,
-    requestTable: {
-      name: process.env.RequestCacheTableName,
-      region: process.env.AWS_REGION
-    },
-    userTable: {
-      name: process.env.UserCacheTableName,
-      region: process.env.AWS_REGION
-    },
-    userQueue: {
-      name: process.env.UsersQueueName,
-      owner: process.env.UsersQueueOwner
-    }
-  }
+  let resourceData = getResourceData()
 
   Promise.resolve()
     .then(() => {
@@ -44,4 +30,22 @@ module.exports.handle = (event, context, callback) => {
     }).catch(e => {
       callback(e)
     })
+}
+
+const getResourceData = () => {
+  return {
+    region: process.env.AWS_REGION,
+    requestTable: {
+      name: process.env.RequestCacheTableName,
+      region: process.env.AWS_REGION
+    },
+    userTable: {
+      name: process.env.UserCacheTableName,
+      region: process.env.AWS_REGION
+    },
+    userQueue: {
+      name: process.env.UsersQueueName,
+      owner: process.env.UsersQueueOwner
+    }
+  }
 }
