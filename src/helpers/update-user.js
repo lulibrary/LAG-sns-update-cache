@@ -2,6 +2,8 @@ const User = require('@lulibrary/lag-alma-utils/src/user')
 const ItemNotFoundError = require('@lulibrary/lag-utils/src/item-not-found-error')
 const sendToQueue = require('./send-to-queue')
 
+// Helper method for SNS Handler Lambdas to add a new Loan to a User in the cache
+// or send the user ID to a message Queue for bulk updating if it is not in the cache
 module.exports = (loanData, queueData) => {
   const loanID = loanData.item_loan.loan_id
   const userID = loanData.item_loan.user_id
