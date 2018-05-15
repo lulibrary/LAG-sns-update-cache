@@ -63,6 +63,19 @@ describe('update user method tests', () => {
       })
   })
 
+  it('should call the addRequest method with the request id if a matching record is found', () => {
+    let getDataStub = sandbox.stub(User.prototype, 'getData')
+    getDataStub.returns(Promise.resolve())
+
+    let addRequestStub = sandbox.stub(User.prototype, 'addRequest')
+    addRequestStub.returns(Promise.resolve())
+
+    return updateUser('a user', 'request', 'a request', ctx)
+      .catch(e => {
+        addRequestStub.should.have.been.calledWith('a request')
+      })
+  })
+
   it('should be rejected with an error if getData is rejected', () => {
     let getDataStub = sandbox.stub(User.prototype, 'getData')
     getDataStub.rejects(new Error('DynamoDB broke'))
