@@ -15,6 +15,18 @@ const Queue = require('@lulibrary/lag-utils/src/queue')
 // Module under test
 const updateUser = require('../../src/helpers/update-user')
 
+const ctx = {
+  userTable: {
+    name: 'a table',
+    region: 'a region'
+  },
+  userQueue: {
+    name: 'a queue',
+    owner: 'an owner'
+  },
+  region: 'a region'
+}
+
 describe('update user method tests', () => {
   afterEach(() => {
     sandbox.restore()
@@ -32,7 +44,7 @@ describe('update user method tests', () => {
     })
     saveStub.resolves(true)
 
-    return updateUser({ item_loan: { user_id: 'a user', loan_id: 'a loan' } }, { queueName: 'a queue', queueOwner: 'an owner' })
+    return updateUser('a user', 'loan', 'a loan', ctx)
       .then(() => {
         getDataStub.should.have.been.calledOnce
       })
@@ -45,7 +57,7 @@ describe('update user method tests', () => {
     let addLoanStub = sandbox.stub(User.prototype, 'addLoan')
     addLoanStub.returns(Promise.resolve())
 
-    return updateUser({ item_loan: { user_id: 'a user', loan_id: 'a loan' } }, { queueName: 'a queue', queueOwner: 'an owner' })
+    return updateUser('a user', 'loan', 'a loan', ctx)
       .catch(e => {
         addLoanStub.should.have.been.calledWith('a loan')
       })
@@ -55,7 +67,7 @@ describe('update user method tests', () => {
     let getDataStub = sandbox.stub(User.prototype, 'getData')
     getDataStub.rejects(new Error('DynamoDB broke'))
 
-    return updateUser({ item_loan: { user_id: 'a user', loan_id: 'a loan' } }, { queueName: 'a queue', queueOwner: 'an owner' })
+    return updateUser('a user', 'loan', 'a loan', ctx)
       .should.eventually.be.rejectedWith('DynamoDB broke')
       .and.should.eventually.be.an.instanceOf(Error)
   })
@@ -66,7 +78,7 @@ describe('update user method tests', () => {
     sandbox.stub(Queue.prototype, 'getQueueUrl').resolves('')
     let sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
 
-    return updateUser({ item_loan: { user_id: 'a user', loan_id: 'a loan' } }, { queueName: 'a queue', queueOwner: 'an owner' })
+    return updateUser('a user', 'loan', 'a loan', ctx)
       .then(() => {
         sendMessageStub.should.have.been.calledOnce
       })

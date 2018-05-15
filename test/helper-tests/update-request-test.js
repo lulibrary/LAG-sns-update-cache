@@ -18,6 +18,13 @@ describe('update request method tests', () => {
   })
 
   it('should call the populate method with the correct parameters', () => {
+    const ctx = {
+      requestTable: {
+        name: 'a table',
+        region: 'a region'
+      }
+    }
+
     // stub calls to Request class
     const populateStub = sandbox.stub(Request.prototype, 'populate')
 
@@ -31,13 +38,20 @@ describe('update request method tests', () => {
       author: 'an author'
     }
 
-    return updateRequest({ user_request: { request_id: 'a request', author: 'an author' } })
+    return updateRequest({ user_request: { request_id: 'a request', author: 'an author' } }, ctx)
       .then(() => {
         populateStub.should.have.been.calledWith(expected)
       })
   })
 
   it('should call Request#save', () => {
+    const ctx = {
+      requestTable: {
+        name: 'a table',
+        region: 'a region'
+      }
+    }
+
     sandbox.stub(Request.prototype, 'populate').returns(
       new Request({id: 'a request', tableName: 'a table', region: 'a region'})
     )
@@ -45,13 +59,20 @@ describe('update request method tests', () => {
     const saveStub = sandbox.stub(Request.prototype, 'save')
     saveStub.resolves(true)
 
-    return updateRequest({ user_request: { request_id: 'a request', user_id: 'a user' } }, 'a table', 'a region')
+    return updateRequest({ user_request: { request_id: 'a request', user_id: 'a user' } }, ctx)
       .then(() => {
         saveStub.should.have.been.calledOnce
       })
   })
 
   it('should throw an error if Request#populate throws an error', () => {
+    const ctx = {
+      requestTable: {
+        name: 'a table',
+        region: 'a region'
+      }
+    }
+
     sandbox.stub(Request.prototype, 'populate').throws(new Error('populate failed'))
     const saveStub = sandbox.stub(Request.prototype, 'save')
 
@@ -62,7 +83,7 @@ describe('update request method tests', () => {
       }
     }
 
-    expect(() => updateRequest(testRequest, 'a table', 'a region')).to.throw('populate failed')
+    expect(() => updateRequest(testRequest, ctx)).to.throw('populate failed')
     saveStub.should.not.have.been.called
   })
 })
