@@ -18,7 +18,7 @@ describe('update request method tests', () => {
   })
 
   it('should call the populate method with the correct parameters', () => {
-    const ctx = {
+    const resourceData = {
       requestTable: {
         name: 'a table',
         region: 'a region'
@@ -38,14 +38,14 @@ describe('update request method tests', () => {
       author: 'an author'
     }
 
-    return updateRequest({ user_request: { request_id: 'a request', author: 'an author' } }, ctx)
+    return updateRequest({ user_request: { request_id: 'a request', author: 'an author' } }, resourceData)
       .then(() => {
         populateStub.should.have.been.calledWith(expected)
       })
   })
 
   it('should call Request#save', () => {
-    const ctx = {
+    const resourceData = {
       requestTable: {
         name: 'a table',
         region: 'a region'
@@ -59,14 +59,14 @@ describe('update request method tests', () => {
     const saveStub = sandbox.stub(Request.prototype, 'save')
     saveStub.resolves(true)
 
-    return updateRequest({ user_request: { request_id: 'a request', user_id: 'a user' } }, ctx)
+    return updateRequest({ user_request: { request_id: 'a request', user_id: 'a user' } }, resourceData)
       .then(() => {
         saveStub.should.have.been.calledOnce
       })
   })
 
   it('should throw an error if Request#populate throws an error', () => {
-    const ctx = {
+    const resourceData = {
       requestTable: {
         name: 'a table',
         region: 'a region'
@@ -83,7 +83,7 @@ describe('update request method tests', () => {
       }
     }
 
-    expect(() => updateRequest(testRequest, ctx)).to.throw('populate failed')
+    expect(() => updateRequest(testRequest, resourceData)).to.throw('populate failed')
     saveStub.should.not.have.been.called
   })
 })

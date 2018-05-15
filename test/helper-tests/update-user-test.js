@@ -15,7 +15,7 @@ const Queue = require('@lulibrary/lag-utils/src/queue')
 // Module under test
 const updateUser = require('../../src/helpers/update-user')
 
-const ctx = {
+const resourceData = {
   userTable: {
     name: 'a table',
     region: 'a region'
@@ -44,7 +44,7 @@ describe('update user method tests', () => {
     })
     saveStub.resolves(true)
 
-    return updateUser('a user', 'loan', 'a loan', ctx)
+    return updateUser('a user', 'loan', 'a loan', resourceData)
       .then(() => {
         getDataStub.should.have.been.calledOnce
       })
@@ -57,7 +57,7 @@ describe('update user method tests', () => {
     let addLoanStub = sandbox.stub(User.prototype, 'addLoan')
     addLoanStub.returns(Promise.resolve())
 
-    return updateUser('a user', 'loan', 'a loan', ctx)
+    return updateUser('a user', 'loan', 'a loan', resourceData)
       .catch(e => {
         addLoanStub.should.have.been.calledWith('a loan')
       })
@@ -70,7 +70,7 @@ describe('update user method tests', () => {
     let addRequestStub = sandbox.stub(User.prototype, 'addRequest')
     addRequestStub.returns(Promise.resolve())
 
-    return updateUser('a user', 'request', 'a request', ctx)
+    return updateUser('a user', 'request', 'a request', resourceData)
       .catch(e => {
         addRequestStub.should.have.been.calledWith('a request')
       })
@@ -80,7 +80,7 @@ describe('update user method tests', () => {
     let getDataStub = sandbox.stub(User.prototype, 'getData')
     getDataStub.rejects(new Error('DynamoDB broke'))
 
-    return updateUser('a user', 'loan', 'a loan', ctx)
+    return updateUser('a user', 'loan', 'a loan', resourceData)
       .should.eventually.be.rejectedWith('DynamoDB broke')
       .and.should.eventually.be.an.instanceOf(Error)
   })
@@ -91,7 +91,7 @@ describe('update user method tests', () => {
     sandbox.stub(Queue.prototype, 'getQueueUrl').resolves('')
     let sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
 
-    return updateUser('a user', 'loan', 'a loan', ctx)
+    return updateUser('a user', 'loan', 'a loan', resourceData)
       .then(() => {
         sendMessageStub.should.have.been.calledOnce
       })
