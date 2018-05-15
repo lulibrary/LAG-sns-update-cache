@@ -9,7 +9,7 @@ jobs:
           keys:
             - dependencies-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "package.json" }}
             - dependencies-cache-{{ .Environment.CACHE_VERSION }}
-            - dependencies-cache
+            - dependencies-cache-{{ .Environment.LAST_STABLE_CACHE_VERSION }}
       - run:
           name: Setup CodeClimate test-reporter
           command: |
@@ -39,7 +39,7 @@ jobs:
           keys:
             - dependencies-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "package.json" }}
             - dependencies-cache-{{ .Environment.CACHE_VERSION }}
-            - dependencies-cache
+            - dependencies-cache-{{ .Environment.LAST_STABLE_CACHE_VERSION }}
       - run:
           name: Install Serverless CLI and dependencies
           command: |
@@ -74,7 +74,7 @@ jobs:
           keys:
             - dependencies-cache-{{ .Environment.CACHE_VERSION }}-{{ checksum "package.json" }}
             - dependencies-cache-{{ .Environment.CACHE_VERSION }}
-            - dependencies-cache
+            - dependencies-cache-{{ .Environment.LAST_STABLE_CACHE_VERSION }}
       - run:
           name: Install Serverless CLI and dependencies
           command: |
