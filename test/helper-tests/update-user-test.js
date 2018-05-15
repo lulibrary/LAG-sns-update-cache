@@ -96,4 +96,12 @@ describe('update user method tests', () => {
         sendMessageStub.should.have.been.calledOnce
       })
   })
+
+  it('should throw an error if the specified field is not one of those permitted', () => {
+    sandbox.stub(User.prototype, 'getData').resolves()
+
+    return updateUser('a user', 'item', 'a loan', resourceData)
+      .should.eventually.be.rejectedWith('Cannot add to this field')
+      .and.should.eventually.be.an.instanceOf(Error)
+  })
 })
