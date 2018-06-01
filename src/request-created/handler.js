@@ -1,18 +1,19 @@
 'use strict'
 
+const Schemas = require('@lulibrary/lag-alma-utils')
+
 // const AlmaUtils = require('@lulibrary/lag-alma-utils/src/')
 const validateEvent = require('../validate-event')
 const extractMessageData = require('../extract-message-data')
-
-const updateRequest = require('../helpers/update-request')
-const updateUser = require('../helpers/update-user')
+const Queue = require('@lulibrary/lag-utils/src/queue')
 
 const supportedEvents = ['REQUEST_CREATED']
 
+const UserModel = Schemas.UserSchema(process.env.UserCacheTableName)
+const RequestModel = Schemas.RequestSchema(process.env.RequestCacheTableName)
+
 module.exports.handle = (event, context, callback) => {
   let requestData
-
-  let resourceData = getResourceData()
 
   Promise.resolve()
     .then(() => {
@@ -21,8 +22,8 @@ module.exports.handle = (event, context, callback) => {
     })
     .then(() => {
       return Promise.all([
-        updateRequest(requestData, resourceData),
-        updateUser(requestData.user_request.user_primary_id, 'request', requestData.user_request.request_id, resourceData)
+        updateRequest(requestData.user_request),
+        updateUser(requestData.user_request.user_primary_id, requestData.user_request.request_id)
       ])
     })
     .then(() => {
@@ -32,20 +33,14 @@ module.exports.handle = (event, context, callback) => {
     })
 }
 
-const getResourceData = () => {
-  return {
-    region: process.env.AWS_REGION,
-    requestTable: {
-      name: process.env.RequestCacheTableName,
-      region: process.env.AWS_REGION
-    },
-    userTable: {
-      name: process.env.UserCacheTableName,
-      region: process.env.AWS_REGION
-    },
-    userQueue: {
-      name: process.env.UsersQueueName,
-      owner: process.env.UsersQueueOwner
-    }
-  }
+const updateUser = (userID, requestID) => {
+  return UserModel.get(userID)
+    .then((user) => {
+      return user
+        ? user.addRequest(requestID).save()
+        : new Queue(process.env.UsersQueueName, process.env.UsersQueueOwner)
+          .sendMessage(userID)
+    })
 }
+
+const updateRequest = (requestData) => new RequestModel(requestData).save()

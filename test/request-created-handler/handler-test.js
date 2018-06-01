@@ -2,6 +2,10 @@ const sinon = require('sinon')
 const sandbox = sinon.sandbox.create()
 const AWS_MOCK = require('aws-sdk-mock')
 
+const AWS = require('aws-sdk')
+const dynamo = new AWS.DynamoDB({ endpoint: 'http://127.0.0.1:8000', region: 'eu-west-2' })
+const docClient = new AWS.DynamoDB.DocumentClient({ endpoint: 'http://127.0.0.1:8000', region: 'eu-west-2' })
+
 const chai = require('chai')
 const sinonChai = require('sinon-chai')
 const chaiAsPromised = require('chai-as-promised')
@@ -11,15 +15,21 @@ const should = chai.should()
 
 const rewire = require('rewire')
 
+const DynamoLocal = require('../dynamodb-local')
+require('dynamoose').local()
+
 // For use when the User and Request classes are exported by the Utils entry point
 // const Utils = require('@lulibrary/lag-alma-utils')
 
-const User = require('@lulibrary/lag-alma-utils/src/user')
-const Request = require('@lulibrary/lag-alma-utils/src/request')
+const Schemas = require('@lulibrary/lag-alma-utils')
 
-const ItemNotFoundError = require('@lulibrary/lag-utils/src/item-not-found-error')
 const UnsupportedEventError = require('../../src/unsupported-event-error')
 const Queue = require('@lulibrary/lag-utils/src/queue')
+
+const testUserTable = 'userCacheTable'
+const testRequestTable = 'requestCacheTable'
+process.env.UserCacheTableName = 'userCacheTable'
+process.env.RequestCacheTableName = 'requestCacheTable'
 
 // Module under test
 const RequestCreated = rewire('../../src/request-created/handler')
@@ -29,17 +39,45 @@ const TestEvents = {
   RequestCreated: require('./events/request-created-event.json')
 }
 
+let wires = []
+
 describe('request updated lambda tests', () => {
+  before(function () {
+    this.timeout(10000)
+    return DynamoLocal.launch()
+      .then(() => {
+        return DynamoLocal.create([
+          {
+            name: testUserTable,
+            key: 'primary_id'
+          },
+          {
+            name: testRequestTable,
+            key: 'request_id'
+          }
+        ])
+      })
+  })
+
+  after(() => {
+    DynamoLocal.stop()
+  })
+
   afterEach(() => {
     sandbox.restore()
+    wires.forEach(wire => wire())
+    wires = []
   })
 
   describe('SNS event tests', () => {
     it('should callback with a success message if the event is valid', (done) => {
-      // stub calls to User and Request class
-      sandbox.stub(Request.prototype, 'save').resolves(true)
-      sandbox.stub(User.prototype, 'getData').resolves(true)
-      sandbox.stub(User.prototype, 'save').resolves(true)
+      const updateUserStub = sandbox.stub()
+      updateUserStub.resolves(true)
+      wires.push(RequestCreated.__set__('updateUser', updateUserStub))
+
+      const updateRequestStub = sandbox.stub()
+      updateRequestStub.resolves(true)
+      wires.push(RequestCreated.__set__('updateRequest', updateRequestStub))
 
       RequestCreated.handle(TestEvents.RequestCreated, null, (err, data) => {
         should.not.exist(err)
@@ -49,12 +87,13 @@ describe('request updated lambda tests', () => {
     })
 
     it('should callback with an error if updateRequest is rejected', (done) => {
-      // stub calls made by updateUser, ensure it resolves
-      sandbox.stub(User.prototype, 'getData').resolves(true)
-      sandbox.stub(User.prototype, 'save').resolves(true)
+      const updateUserStub = sandbox.stub()
+      updateUserStub.resolves(true)
+      wires.push(RequestCreated.__set__('updateUser', updateUserStub))
 
-      // Stub calls made by updateRequest, ensure it rejects
-      sandbox.stub(Request.prototype, 'save').rejects(new Error('Update Request failed'))
+      const updateRequestStub = sandbox.stub()
+      updateRequestStub.rejects(new Error('Update Request failed'))
+      wires.push(RequestCreated.__set__('updateRequest', updateRequestStub))
 
       RequestCreated.handle(TestEvents.RequestCreated, null, (err, data) => {
         should.not.exist(data)
@@ -65,12 +104,13 @@ describe('request updated lambda tests', () => {
     })
 
     it('should callback with an error if updateRequest is rejected', (done) => {
-      // stub calls made by updateUser, ensure it rejects
-      sandbox.stub(User.prototype, 'getData').resolves(true)
-      sandbox.stub(User.prototype, 'save').rejects(new Error('Update User failed'))
+      const updateUserStub = sandbox.stub()
+      updateUserStub.rejects(new Error('Update User failed'))
+      wires.push(RequestCreated.__set__('updateUser', updateUserStub))
 
-      // Stub calls made by updateRequest, ensure it resolves
-      sandbox.stub(Request.prototype, 'save').resolves(true)
+      const updateRequestStub = sandbox.stub()
+      updateRequestStub.resolves(true)
+      wires.push(RequestCreated.__set__('updateRequest', updateRequestStub))
 
       RequestCreated.handle(TestEvents.RequestCreated, null, (err, data) => {
         should.not.exist(data)
@@ -93,7 +133,7 @@ describe('request updated lambda tests', () => {
       })
     })
 
-    it('should be rejected with an error if the event type is not REQUEST_CREATED', (done) => {
+    it('should be rejected with an error if the event type is not REQUEST_CREATED', () => {
       const testEvent = {
         Records: [{
           Sns: {
@@ -106,115 +146,124 @@ describe('request updated lambda tests', () => {
         }]
       }
 
-      RequestCreated.handle(testEvent, null, (err, data) => {
-        should.not.exist(data)
-        err.should.be.an.instanceOf(UnsupportedEventError)
-        err.message.should.equal('Event type NOT_A_VALID_EVENT is not supported')
-        done()
+      return new Promise((resolve, reject) => {
+        RequestCreated.handle(testEvent, null, (err, data) => {
+          err ? reject(err) : resolve(data)
+        })
       })
+        .should.eventually.be.rejectedWith('Event type NOT_A_VALID_EVENT is not supported')
+        .and.should.eventually.be.an.instanceOf(UnsupportedEventError)
     })
   })
 
-  describe('end to end tests', () => {
-    before(() => {
-      process.env.UserCacheTableName = 'a user cache table'
-      process.env.RequestCacheTableName = 'a request cache table'
+  describe('end to end tests', function () {
+    this.timeout(5000)
 
+    before(() => {
       process.env.AWS_REGION = 'eu-west-2'
     })
 
     after(() => {
-      delete process.env.UserCacheTableName
-      delete process.env.RequestCacheTableName
-
-      delete process.env.UsersQueueName
-      delete process.env.UsersQueueOwner
-
       delete process.env.AWS_REGION
     })
 
     afterEach(() => {
-      AWS_MOCK.restore('DynamoDB.DocumentClient')
       AWS_MOCK.restore('SQS')
     })
 
-    it('should call DynamoDB put correctly for the Users table', (done) => {
+    it('should update an item in the Users table', () => {
+      const updateRequestStub = sandbox.stub()
+      updateRequestStub.resolves(true)
+      wires.push(RequestCreated.__set__('updateRequest', updateRequestStub))
+
       let testUserID = 'testuser'
-      let testUserRequestIDs = ['request-1', 'request-2']
 
-      sandbox.stub(Request.prototype, 'populate').returns({
-        save: () => { return Promise.resolve(true) }
-      })
-
-      let putStub = sandbox.stub()
-      putStub.callsArgWith(1, null, true)
-      AWS_MOCK.mock('DynamoDB.DocumentClient', 'put', putStub)
-
-      AWS_MOCK.mock('DynamoDB.DocumentClient', 'get', { Item: { user_id: testUserID, request_ids: testUserRequestIDs, loan_ids: [] } })
-
-      const expected = {
+      const testItemParams = {
         Item: {
-          user_id: 'testuser',
-          request_ids: ['request-1', 'request-2', '83013520000121'],
-          loan_ids: []
+          primary_id: {
+            S: 'testuser'
+          },
+          request_ids: {
+            SS: ['request-1', 'request-2']
+          }
         },
-        TableName: 'a user cache table'
+        TableName: testUserTable
       }
 
-      RequestCreated.handle(TestEvents.RequestCreated, {}, (err, data) => {
-        should.not.exist(err)
-        putStub.should.have.been.calledWith(expected)
-        done()
-      })
+      return dynamo.putItem(testItemParams).promise()
+        .then(() => {
+          return new Promise((resolve, reject) => {
+            RequestCreated.handle(TestEvents.RequestCreated, {}, (err, data) => {
+              err ? reject(err) : resolve(data)
+            })
+          })
+        })
+        .then(() => {
+          return dynamo.getItem({
+            Key: {
+              primary_id: {
+                S: testUserID
+              }
+            },
+            TableName: testUserTable
+          }).promise()
+        })
+        .then((res) => {
+          res.Item.request_ids.SS.should.include('83013520000121')
+        })
     })
 
-    it('should call DynamoDB put correctly for the Requests table', (done) => {
-      sandbox.stub(User.prototype, 'getData').resolves()
-      sandbox.stub(User.prototype, 'addRequest').returns({
-        save: sandbox.stub(User.prototype, 'save').resolves()
-      })
+    it('should call DynamoDB put correctly for the Requests table', () => {
+      const updateUserStub = sandbox.stub()
+      updateUserStub.resolves(true)
+      wires.push(RequestCreated.__set__('updateUser', updateUserStub))
 
       let putStub = sandbox.stub()
       putStub.callsArgWith(1, null, true)
-      AWS_MOCK.mock('DynamoDB.DocumentClient', 'put', putStub)
+      AWS_MOCK.mock('DynamoDB', 'putItem', putStub)
 
       const expected = {
-        Item: {
-          title: 'Test title',
-          author: null,
-          description: null,
-          comment: null,
-          request_id: '83013520000121',
-          request_type: 'HOLD',
-          pickup_location: 'Burns',
-          pickup_location_type: 'LIBRARY',
-          pickup_location_library: 'BURNS',
-          material_type: { value: 'BK', desc: 'Book' },
-          request_status: 'NOT_STARTED',
-          place_in_queue: 1,
-          request_date: '2013-11-12Z',
-          user_primary_id: 'testuser' },
-        TableName: 'a request cache table'
+        title: 'Test title',
+        request_id: '83013520000121',
+        request_type: 'HOLD',
+        pickup_location: 'Burns',
+        pickup_location_type: 'LIBRARY',
+        pickup_location_library: 'BURNS',
+        material_type: { value: 'BK', desc: 'Book' },
+        request_status: 'NOT_STARTED',
+        place_in_queue: '1',
+        request_date: '2013-11-12Z',
+        user_primary_id: 'testuser'
       }
 
-      RequestCreated.handle(TestEvents.RequestCreated, {}, (err, data) => {
-        should.not.exist(err)
-        putStub.should.have.been.calledWith(expected)
-        done()
+      return new Promise((resolve, reject) => {
+        RequestCreated.handle(TestEvents.RequestCreated, {}, (err, data) => {
+          err ? reject(err) : resolve(data)
+        })
       })
+        .then(() => {
+          return docClient.get({
+            Key: {
+              request_id: '83013520000121'
+            },
+            TableName: testRequestTable
+          }).promise()
+        })
+        .then((res) => {
+          res.Item.should.deep.equal(expected)
+        })
     })
 
-    it('should call SQS publish correctly if the user does not exist in the database', (done) => {
+    it('should call SQS publish correctly if the user does not exist in the database', () => {
       process.env.UsersQueueName = 'a queue name'
       process.env.UsersQueueOwner = 'a queue owner'
 
       let testUserID = 'testuser'
       let testQueueURL = 'http://test.queue.url'
-      sandbox.stub(Request.prototype, 'populate').returns({
-        save: () => { return Promise.resolve(true) }
-      })
 
-      sandbox.stub(User.prototype, 'getData').rejects(new ItemNotFoundError('No item found'))
+      const updateRequestStub = sandbox.stub()
+      updateRequestStub.resolves(true)
+      wires.push(RequestCreated.__set__('updateRequest', updateRequestStub))
 
       AWS_MOCK.mock('SQS', 'getQueueUrl', { QueueUrl: testQueueURL })
 
@@ -227,11 +276,18 @@ describe('request updated lambda tests', () => {
         MessageBody: testUserID
       }
 
-      RequestCreated.handle(TestEvents.RequestCreated, {}, (err, data) => {
-        should.not.exist(err)
-        sendMessageStub.should.have.been.calledWith(expected)
-        done()
-      })
+      return docClient.delete({ Key: { primary_id: 'testuser' }, TableName: testUserTable })
+        .promise()
+        .then(() => {
+          return new Promise((resolve, reject) => {
+            RequestCreated.handle(TestEvents.RequestCreated, {}, (err, data) => {
+              err ? reject(err) : resolve(data)
+            })
+          })
+        })
+        .then((data) => {
+          sendMessageStub.should.have.been.calledWith(expected)
+        })
     })
   })
 })
