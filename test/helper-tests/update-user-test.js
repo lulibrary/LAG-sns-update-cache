@@ -15,6 +15,18 @@ const Queue = require('@lulibrary/lag-utils/src/queue')
 // Module under test
 const updateUser = require('../../src/helpers/update-user')
 
+const resourceData = {
+  userTable: {
+    name: 'a table',
+    region: 'a region'
+  },
+  userQueue: {
+    name: 'a queue',
+    owner: 'an owner'
+  },
+  region: 'a region'
+}
+
 describe('update user method tests', () => {
   afterEach(() => {
     sandbox.restore()
@@ -32,7 +44,7 @@ describe('update user method tests', () => {
     })
     saveStub.resolves(true)
 
-    return updateUser({ item_loan: { user_id: 'a user', loan_id: 'a loan' } }, { queueName: 'a queue', queueOwner: 'an owner' })
+    return updateUser('a user', 'loan', 'a loan', resourceData)
       .then(() => {
         getDataStub.should.have.been.calledOnce
       })
@@ -45,9 +57,22 @@ describe('update user method tests', () => {
     let addLoanStub = sandbox.stub(User.prototype, 'addLoan')
     addLoanStub.returns(Promise.resolve())
 
-    return updateUser({ item_loan: { user_id: 'a user', loan_id: 'a loan' } }, { queueName: 'a queue', queueOwner: 'an owner' })
+    return updateUser('a user', 'loan', 'a loan', resourceData)
       .catch(e => {
         addLoanStub.should.have.been.calledWith('a loan')
+      })
+  })
+
+  it('should call the addRequest method with the request id if a matching record is found', () => {
+    let getDataStub = sandbox.stub(User.prototype, 'getData')
+    getDataStub.returns(Promise.resolve())
+
+    let addRequestStub = sandbox.stub(User.prototype, 'addRequest')
+    addRequestStub.returns(Promise.resolve())
+
+    return updateUser('a user', 'request', 'a request', resourceData)
+      .catch(e => {
+        addRequestStub.should.have.been.calledWith('a request')
       })
   })
 
@@ -55,7 +80,7 @@ describe('update user method tests', () => {
     let getDataStub = sandbox.stub(User.prototype, 'getData')
     getDataStub.rejects(new Error('DynamoDB broke'))
 
-    return updateUser({ item_loan: { user_id: 'a user', loan_id: 'a loan' } }, { queueName: 'a queue', queueOwner: 'an owner' })
+    return updateUser('a user', 'loan', 'a loan', resourceData)
       .should.eventually.be.rejectedWith('DynamoDB broke')
       .and.should.eventually.be.an.instanceOf(Error)
   })
@@ -66,9 +91,17 @@ describe('update user method tests', () => {
     sandbox.stub(Queue.prototype, 'getQueueUrl').resolves('')
     let sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
 
-    return updateUser({ item_loan: { user_id: 'a user', loan_id: 'a loan' } }, { queueName: 'a queue', queueOwner: 'an owner' })
+    return updateUser('a user', 'loan', 'a loan', resourceData)
       .then(() => {
         sendMessageStub.should.have.been.calledOnce
       })
+  })
+
+  it('should throw an error if the specified field is not one of those permitted', () => {
+    sandbox.stub(User.prototype, 'getData').resolves()
+
+    return updateUser('a user', 'item', 'a loan', resourceData)
+      .should.eventually.be.rejectedWith('Cannot add to this field')
+      .and.should.eventually.be.an.instanceOf(Error)
   })
 })
