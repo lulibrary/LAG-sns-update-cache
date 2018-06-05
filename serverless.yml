@@ -68,6 +68,10 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+    usersQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-usersQueue-${opt:stage}
   
   Outputs:
     UserCacheTableArn:
@@ -85,6 +89,21 @@ resources:
       Value: ${self:custom.TableArns.requestCacheTable}
       Export:
         Name: ${self:service}:${opt:stage}:RequestCacheTableArn
+    UsersQueueName:
+      Description: Name of Users Queue
+      Value: ${self:custom.UsersQueueData.Name}
+      Export:
+        Name: ${self:service}:${opt:stage}:UsersQueueName
+    UsersQueueOwner:
+      Description: AWS Account ID of owner of Users Queue
+      Value: '#{AWS::AccountId}'
+      Export:
+        Name: ${self:service}:${opt:stage}:UsersQueueOwner
+    UsersQueueArn:
+      Description: Arn of Users Queue
+      Value: ${self:custom.UsersQueueData.Arn}
+      Export:
+        Name: ${self:service}:${opt:stage}:UsersQueueArn
 
 custom:
   TableArns:
@@ -94,4 +113,7 @@ custom:
       "Fn::GetAtt": [loanCacheTable, Arn]
     requestCacheTable:
       "Fn::GetAtt": [requestCacheTable, Arn]
+
+plugins:
+  - serverless-pseudo-parameters
 
