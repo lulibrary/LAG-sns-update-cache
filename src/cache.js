@@ -30,7 +30,7 @@ class Cache {
     return this.models.UserModel.get(userID)
       .then(user => {
         return user
-          ? user.addLoan(loanID)
+          ? user.addLoan(loanID).save()
           : this.usersQueue.sendMessage(userID)
       })
   }
@@ -39,7 +39,7 @@ class Cache {
     return this.models.UserModel.get(userID)
       .then(user => {
         return user
-          ? user.addRequest(requestID)
+          ? user.addRequest(requestID).save()
           : this.usersQueue.sendMessage(userID)
       })
   }
