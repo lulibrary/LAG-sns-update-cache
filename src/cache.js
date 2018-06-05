@@ -27,20 +27,26 @@ class Cache {
   }
 
   updateUserWithLoan (userID, loanID) {
-    return this.models.UserModel.get(userID)
-      .then(user => {
-        return user
-          ? user.addLoan(loanID).save()
-          : this.usersQueue.sendMessage(userID)
-      })
+    return this.updateUserWithItem(userID, loanID, 'loan')
   }
 
   updateUserWithRequest (userID, requestID) {
+    return this.updateUserWithItem(userID, requestID, 'request')
+  }
+
+  updateUserWithItem (userID, itemID, itemType) {
     return this.models.UserModel.get(userID)
       .then(user => {
-        return user
-          ? user.addRequest(requestID).save()
-          : this.usersQueue.sendMessage(userID)
+        if (user) {
+          switch (itemType) {
+            case 'loan':
+              return user.addLoan(itemID).save()
+            case 'request':
+              return user.addRequest(itemID).save()
+          }
+        } else {
+          return this.usersQueue.sendMessage(userID)
+        }
       })
   }
 
