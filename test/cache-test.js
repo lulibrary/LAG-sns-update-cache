@@ -69,7 +69,11 @@ describe('cache tests', () => {
       })
       let userGetStub = sandbox.stub(testCache.models.UserModel, 'get')
       userGetStub.resolves({
-        addRequest: () => true
+        addRequest: () => {
+          return {
+            save: () => true
+          }
+        }
       })
 
       return testCache.updateUserWithRequest('a user', 'a request').then(() => {
@@ -85,6 +89,9 @@ describe('cache tests', () => {
 
       let userGetStub = sandbox.stub(testCache.models.UserModel, 'get')
       let addRequestStub = sandbox.stub()
+      addRequestStub.returns({
+        save: () => Promise.resolve(true)
+      })
       userGetStub.resolves({
         addRequest: addRequestStub
       })
@@ -119,7 +126,11 @@ describe('cache tests', () => {
       })
       let userGetStub = sandbox.stub(testCache.models.UserModel, 'get')
       userGetStub.resolves({
-        addLoan: () => true
+        addLoan: () => {
+          return {
+            save: () => true
+          }
+        }
       })
 
       return testCache.updateUserWithLoan('a user', 'a loan').then(() => {
@@ -128,13 +139,16 @@ describe('cache tests', () => {
       })
     })
 
-    it('should call addRequest on the user if the user is found', () => {
+    it('should call addLoan on the user if the user is found', () => {
       let testCache = new Cache({
         user: 'userTable'
       })
 
       let userGetStub = sandbox.stub(testCache.models.UserModel, 'get')
       let addLoanStub = sandbox.stub()
+      addLoanStub.returns({
+        save: () => Promise.resolve(true)
+      })
       userGetStub.resolves({
         addLoan: addLoanStub
       })
