@@ -44,14 +44,14 @@ class Cache {
       })
   }
 
-  updateLoan (userLoan) {
-    return new this.models.LoanModel(userLoan).save()
+  updateLoan (itemLoan) {
+    return new this.models.LoanModel(itemLoan).save()
   }
 
-  handleLoanUpdate (userLoan) {
+  handleLoanUpdate (itemLoan) {
     return Promise.all([
-      this.updateLoan(userLoan),
-      this.updateUserWithLoan(userLoan.user_id, userLoan.loan_id)
+      this.updateLoan(itemLoan),
+      this.updateUserWithLoan(itemLoan.user_id, itemLoan.loan_id)
     ])
   }
 }
