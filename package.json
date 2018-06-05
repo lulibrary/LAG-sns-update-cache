@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "serverless-pseudo-parameters": "^1.6.0",
-    "@lulibrary/lag-alma-utils": "git+ssh://git@github.com/lulibrary/LAG-Alma-Utils.git#v0.3.1",
+    "@lulibrary/lag-alma-utils": "git+ssh://git@github.com/lulibrary/LAG-Alma-Utils.git#v0.3.2",
     "@lulibrary/lag-utils": "git+ssh://git@github.com/lulibrary/LAG-Utils.git#v0.3.2",
     "eslint-plugin-chai-friendly": "^0.4.1"
   }
