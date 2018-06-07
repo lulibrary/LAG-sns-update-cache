@@ -113,6 +113,11 @@ custom:
       "Fn::GetAtt": [loanCacheTable, Arn]
     requestCacheTable:
       "Fn::GetAtt": [requestCacheTable, Arn]
+  UsersQueueData:
+    Name:
+      "Fn::GetAtt": ["usersQueue", "QueueName"]
+    Arn:
+      "Fn::GetAtt": ["usersQueue", "Arn"]
 
 plugins:
   - serverless-pseudo-parameters
