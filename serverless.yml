@@ -24,8 +24,16 @@ provider:
   stage: ${opt:stage}
 
 functions:
-  hello:
-    handler: src/handler.handle
+  LoanCreated:
+    handler: src/loan-created/handler.handle
+    events:
+      - sns:
+          arn: ${cf:lag-awh-${opt:stage}.LoanCreatedTopicArn}
+    environment:
+      UserCacheTableName: ${self:custom.TableNames.userCacheTable}
+      LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
+      UsersQueueName: ${self:custom.UsersQueueData.Name}
+      UsersQueueOwner: '#{AWS::AccountId}'
 
 resources:
   Resources:
