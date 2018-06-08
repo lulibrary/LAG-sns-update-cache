@@ -71,7 +71,7 @@ resources:
     usersQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ${self:service}-usersQueue-${opt:stage}
+        QueueName: ${self:service}-${opt:stage}-usersQueue
   
   Outputs:
     UserCacheTableArn:
