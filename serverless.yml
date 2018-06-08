@@ -28,7 +28,7 @@ functions:
     handler: src/loan-created/handler.handle
     events:
       - sns:
-          arn: ${env:LOAN_CREATED_TOPIC_ARN}
+          arn: ${self:custom.TopicArns.${self:stage}.LoanCreated}
     environment:
       UserCacheTableName: ${self:custom.TableNames.userCacheTable}
       LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
@@ -114,6 +114,11 @@ resources:
         Name: ${self:service}:${opt:stage}:UsersQueueArn
 
 custom:
+  TopicArns:
+    stg:
+      LoanCreated: ${env:LOAN_CREATED_TOPIC_ARN_STG}
+    prod:
+      LoanCreated: ${env:LOAN_CREATED_TOPIC_ARN_PROD}
   TableArns:
     userCacheTable:
       "Fn::GetAtt": [userCacheTable, Arn]
