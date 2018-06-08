@@ -24,8 +24,16 @@ provider:
   stage: ${opt:stage}
 
 functions:
-  hello:
-    handler: src/handler.handle
+  LoanCreated:
+    handler: src/loan-created/handler.handle
+    events:
+      - sns:
+          arn: ${cf:lag-awh-${opt:stage}.LoanCreatedTopicArn}
+    environment:
+      UserCacheTableName: ${self:custom.TableNames.userCacheTable}
+      LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
+      UsersQueueName: ${self:custom.UsersQueueData.Name}
+      UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
 
 resources:
   Resources:
@@ -113,11 +121,15 @@ custom:
       "Fn::GetAtt": [loanCacheTable, Arn]
     requestCacheTable:
       "Fn::GetAtt": [requestCacheTable, Arn]
+  TableNames:
+    userCacheTable: ${self:service}-userCacheTable-${opt:stage}
+    loanCacheTable: ${self:service}-loanCacheTable-${opt:stage}
   UsersQueueData:
     Name:
       "Fn::GetAtt": ["usersQueue", "QueueName"]
     Arn:
       "Fn::GetAtt": ["usersQueue", "Arn"]
+    Owner: '#{AWS::AccountId}'
 
 plugins:
   - serverless-pseudo-parameters
