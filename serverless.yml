@@ -28,7 +28,7 @@ functions:
     handler: src/loan-created/handler.handle
     events:
       - sns:
-          arn: ${self:custom.TopicArns.${self:stage}.LoanCreated}
+          arn: ${self:custom.TopicArns.${opt:stage}.LoanCreated}
     environment:
       UserCacheTableName: ${self:custom.TableNames.userCacheTable}
       LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
