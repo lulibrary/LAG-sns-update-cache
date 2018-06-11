@@ -44,6 +44,16 @@ functions:
       LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
       UsersQueueName: ${self:custom.UsersQueueData.Name}
       UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
+  LoanReturned:
+    handler: src/loan-returned/handler.handle
+    events:
+      - sns:
+          arn: ${self:custom.TopicArns.${opt:stage}.LoanReturned}
+    environment:
+      UserCacheTableName: ${self:custom.TableNames.userCacheTable}
+      LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
+      UsersQueueName: ${self:custom.UsersQueueData.Name}
+      UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
 
 resources:
   Resources:
@@ -128,9 +138,11 @@ custom:
     stg:
       LoanCreated: ${env:LOAN_CREATED_TOPIC_ARN_STG}
       LoanDueDate: ${env:LOAN_DUE_DATE_TOPIC_ARN_STG}
+      LoanReturned: ${env:LOAN_RETURNED_TOPIC_ARN_STG}
     prod:
       LoanCreated: ${env:LOAN_CREATED_TOPIC_ARN_PROD}
       LoanDueDate: ${env:LOAN_DUE_DATE_TOPIC_ARN_PROD}
+      LoanReturned: ${env:LOAN_RETURNED_TOPIC_ARN_PROD}
   TableArns:
     userCacheTable:
       "Fn::GetAtt": [userCacheTable, Arn]
