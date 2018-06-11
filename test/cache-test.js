@@ -8,6 +8,8 @@ chai.use(sinonChai)
 chai.use(chaiAsPromised)
 chai.should()
 
+const uuid = require('uuid/v4')
+
 const rewire = require('rewire')
 let wires = []
 
@@ -62,7 +64,7 @@ describe('cache tests', () => {
     })
   })
 
-  describe('updateUsersWithRequest tests', () => {
+  describe('updateUserWithAddRequest tests', () => {
     it('should call get on the user model', () => {
       let testCache = new Cache({
         user: 'userTable'
@@ -76,7 +78,7 @@ describe('cache tests', () => {
         }
       })
 
-      return testCache.updateUserWithRequest('a user', 'a request').then(() => {
+      return testCache.updateUserWithAddRequest('a user', 'a request').then(() => {
         userGetStub.should.have.been.calledOnce
         userGetStub.should.have.been.calledWith('a user')
       })
@@ -96,7 +98,7 @@ describe('cache tests', () => {
         addRequest: addRequestStub
       })
 
-      return testCache.updateUserWithRequest('a user', 'a request').then(() => {
+      return testCache.updateUserWithAddRequest('a user', 'a request').then(() => {
         addRequestStub.should.have.been.calledOnce
         addRequestStub.should.have.been.calledWith('a request')
       })
@@ -112,14 +114,14 @@ describe('cache tests', () => {
 
       userGetStub.resolves()
 
-      return testCache.updateUserWithRequest('a user', 'a request').then(() => {
+      return testCache.updateUserWithAddRequest('a user', 'a request').then(() => {
         sendMessageStub.should.have.been.calledOnce
         sendMessageStub.should.have.been.calledWith('a user')
       })
     })
   })
 
-  describe('updateUsersWithLoan tests', () => {
+  describe('updateUserWithAddLoan tests', () => {
     it('should call get on the user model', () => {
       let testCache = new Cache({
         user: 'userTable'
@@ -133,7 +135,7 @@ describe('cache tests', () => {
         }
       })
 
-      return testCache.updateUserWithLoan('a user', 'a loan').then(() => {
+      return testCache.updateUserWithAddLoan('a user', 'a loan').then(() => {
         userGetStub.should.have.been.calledOnce
         userGetStub.should.have.been.calledWith('a user')
       })
@@ -153,7 +155,7 @@ describe('cache tests', () => {
         addLoan: addLoanStub
       })
 
-      return testCache.updateUserWithLoan('a user', 'a loan').then(() => {
+      return testCache.updateUserWithAddLoan('a user', 'a loan').then(() => {
         addLoanStub.should.have.been.calledOnce
         addLoanStub.should.have.been.calledWith('a loan')
       })
@@ -169,7 +171,7 @@ describe('cache tests', () => {
 
       userGetStub.resolves()
 
-      return testCache.updateUserWithLoan('a user', 'a loan').then(() => {
+      return testCache.updateUserWithAddLoan('a user', 'a loan').then(() => {
         sendMessageStub.should.have.been.calledOnce
         sendMessageStub.should.have.been.calledWith('a user')
       })
@@ -215,7 +217,7 @@ describe('cache tests', () => {
       let updateLoanStub = sandbox.stub(testCache, 'updateLoan')
       updateLoanStub.resolves(true)
 
-      sandbox.stub(testCache, 'updateUserWithLoan').resolves(true)
+      sandbox.stub(testCache, 'updateUserWithAddLoan').resolves(true)
 
       return testCache.handleLoanUpdate({
         user_id: 'a user',
@@ -235,7 +237,7 @@ describe('cache tests', () => {
 
       sandbox.stub(testCache, 'updateLoan').resolves(true)
 
-      let updateUserWithLoanStub = sandbox.stub(testCache, 'updateUserWithLoan').resolves(true)
+      let updateUserWithLoanStub = sandbox.stub(testCache, 'updateUserWithAddLoan').resolves(true)
 
       return testCache.handleLoanUpdate({
         user_id: 'a user',
@@ -243,6 +245,202 @@ describe('cache tests', () => {
       }).then(() => {
         updateUserWithLoanStub.should.have.been.calledWith('a user', 'a loan')
       })
+    })
+  })
+
+  describe('updateUserItem method tests', () => {
+    it('should call user#addLoan for parameters ["add", "loan"]', () => {
+      const testCache = new Cache({
+        user: 'userTable'
+      })
+
+      const itemID = uuid()
+
+      const getUserStub = sandbox.stub(testCache.models.UserModel, 'get')
+      const addLoanStub = sandbox.stub()
+      addLoanStub.returns({
+        save: () => true
+      })
+      getUserStub.resolves({
+        addLoan: addLoanStub
+      })
+
+      testCache.updateUserItem('testUser', itemID, 'add', 'loan').then(() => {
+        addLoanStub.should.have.been.calledOnce
+        addLoanStub.should.have.been.calledWith(itemID)
+      })
+    })
+
+    it('should call user#addRequest for parameters ["add", "request"]', () => {
+      const testCache = new Cache({
+        user: 'userTable'
+      })
+
+      const itemID = uuid()
+
+      const getUserStub = sandbox.stub(testCache.models.UserModel, 'get')
+      const addRequestStub = sandbox.stub()
+      addRequestStub.returns({
+        save: () => true
+      })
+      getUserStub.resolves({
+        addRequest: addRequestStub
+      })
+
+      testCache.updateUserItem('testUser', itemID, 'add', 'request').then(() => {
+        addRequestStub.should.have.been.calledOnce
+        addRequestStub.should.have.been.calledWith(itemID)
+      })
+    })
+
+    it('should call user#addRequest for parameters ["delete", "loan"]', () => {
+      const testCache = new Cache({
+        user: 'userTable'
+      })
+
+      const itemID = uuid()
+
+      const getUserStub = sandbox.stub(testCache.models.UserModel, 'get')
+      const deleteLoanStub = sandbox.stub()
+      deleteLoanStub.returns({
+        save: () => true
+      })
+      getUserStub.resolves({
+        deleteLoan: deleteLoanStub
+      })
+
+      testCache.updateUserItem('testUser', itemID, 'delete', 'loan').then(() => {
+        deleteLoanStub.should.have.been.calledOnce
+        deleteLoanStub.should.have.been.calledWith(itemID)
+      })
+    })
+
+    it('should call user#addRequest for parameters ["add", "request"]', () => {
+      const testCache = new Cache({
+        user: 'userTable'
+      })
+
+      const itemID = uuid()
+
+      const getUserStub = sandbox.stub(testCache.models.UserModel, 'get')
+      const deleteRequestStub = sandbox.stub()
+      deleteRequestStub.returns({
+        save: () => true
+      })
+      getUserStub.resolves({
+        deleteRequest: deleteRequestStub
+      })
+
+      testCache.updateUserItem('testUser', itemID, 'delete', 'request').then(() => {
+        deleteRequestStub.should.have.been.calledOnce
+        deleteRequestStub.should.have.been.calledWith(itemID)
+      })
+    })
+
+    it('should call Queue#sendMessage if no user item is found', () => {
+      const testCache = new Cache({
+        user: 'userTable'
+      })
+
+      const userID = uuid()
+
+      sandbox.stub(testCache.models.UserModel, 'get').resolves()
+      const sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
+      sendMessageStub.resolves()
+
+      testCache.updateUserItem(userID, 'testItem', 'delete', 'request').then(() => {
+        sendMessageStub.should.have.been.calledWith(userID)
+      })
+    })
+  })
+
+  describe('updateUserWithDeleteLoan tests', () => {
+    it('should call updateUserItem with parameters ["delete", "loan"]', () => {
+      const testCache = new Cache({
+        user: 'userTable'
+      })
+
+      const userID = uuid()
+      const loanID = uuid()
+
+      const updateUserItemStub = sandbox.stub(testCache, 'updateUserItem')
+      updateUserItemStub.resolves()
+
+      testCache.updateUserWithDeleteLoan(userID, loanID)
+      updateUserItemStub.should.have.been.calledWithExactly(userID, loanID, 'delete', 'loan')
+    })
+
+    it('should call updateUserItem with parameters ["delete", "loan"]', () => {
+      const testCache = new Cache({
+        user: 'userTable'
+      })
+
+      const userID = uuid()
+      const requestID = uuid()
+
+      const updateUserItemStub = sandbox.stub(testCache, 'updateUserItem')
+      updateUserItemStub.resolves()
+
+      testCache.updateUserWithDeleteRequest(userID, requestID)
+      updateUserItemStub.should.have.been.calledWithExactly(userID, requestID, 'delete', 'request')
+    })
+  })
+
+  describe('deleteLoan method tests', () => {
+    it('should call delete on the Loan model', () => {
+      const testCache = new Cache({
+        loan: 'loanTable'
+      })
+
+      const loanID = uuid()
+
+      const deleteStub = sandbox.stub(testCache.models.LoanModel, 'delete')
+      deleteStub.returns()
+
+      testCache.deleteLoan(loanID)
+      deleteStub.should.have.been.calledWithExactly(loanID)
+    })
+  })
+
+  describe('handleLoanReturned method tests', () => {
+    it('should call updateLoan with the loan ID', () => {
+      const testCache = new Cache({
+        loan: 'loanTable'
+      })
+
+      const testItemLoan = {
+        loan_id: uuid(),
+        user_id: uuid()
+      }
+
+      sandbox.stub(testCache, 'updateUserWithDeleteLoan').resolves()
+      const deleteLoanStub = sandbox.stub(testCache, 'deleteLoan')
+      deleteLoanStub.resolves()
+
+      testCache.handleLoanReturned(testItemLoan)
+        .then(() => {
+          deleteLoanStub.should.have.been.calledWithExactly(testItemLoan.loan_id)
+        })
+    })
+
+    it('should call updateUserWithDeleteLoan with the user ID and loan ID', () => {
+      const testCache = new Cache({
+        loan: 'loanTable'
+      })
+
+      const testItemLoan = {
+        loan_id: uuid(),
+        user_id: uuid()
+      }
+
+      const updateUserStub = sandbox.stub(testCache, 'updateUserWithDeleteLoan')
+      sandbox.stub(testCache, 'deleteLoan').resolves()
+      updateUserStub.resolves()
+
+      testCache.handleLoanReturned(testItemLoan)
+        .then(() => {
+          updateUserStub.should.have.been.calledWithExactly(testItemLoan.user_id, testItemLoan.loan_id)
+        })
     })
   })
 })
