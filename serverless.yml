@@ -24,19 +24,11 @@ provider:
   stage: ${opt:stage}
 
 functions:
-  LoanCreated:
+  LoanUpdated: # Handles SNS events of type LOAN_CREATED and LOAN_DUE_DATE
     handler: src/loan-updated/handler.handle
     events:
       - sns:
           arn: ${self:custom.TopicArns.${opt:stage}.LoanCreated}
-    environment:
-      UserCacheTableName: ${self:custom.TableNames.userCacheTable}
-      LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
-      UsersQueueName: ${self:custom.UsersQueueData.Name}
-      UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
-  LoanDueDate:
-    handler: src/loan-updated/handler.handle
-    events:
       - sns:
           arn: ${self:custom.TopicArns.${opt:stage}.LoanDueDate}
     environment:
