@@ -12,8 +12,6 @@ module.exports.handle = (event, context, callback) => {
   Promise.resolve()
     .then(() => {
       loanData = extractMessageData(event)
-    })
-    .then(() => {
       return almaCache.handleLoanUpdate(loanData.item_loan)
     })
     .then(() => {

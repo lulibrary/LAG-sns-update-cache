@@ -25,7 +25,7 @@ provider:
 
 functions:
   LoanCreated:
-    handler: src/loan-created/handler.handle
+    handler: src/loan-updated/handler.handle
     events:
       - sns:
           arn: ${self:custom.TopicArns.${opt:stage}.LoanCreated}
@@ -35,7 +35,7 @@ functions:
       UsersQueueName: ${self:custom.UsersQueueData.Name}
       UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
   LoanDueDate:
-    handler: src/loan-due-date/handler.handle
+    handler: src/loan-updated/handler.handle
     events:
       - sns:
           arn: ${self:custom.TopicArns.${opt:stage}.LoanDueDate}

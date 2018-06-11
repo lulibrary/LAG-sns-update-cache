@@ -27,7 +27,7 @@ const Schemas = require('@lulibrary/lag-alma-utils')
 const Cache = require('../../src/cache')
 
 // Module under test
-const LoanDueDateHandler = require('../../src/loan-created/handler')
+const LoanDueDateHandler = require('../../src/loan-due-date/handler')
 
 // Test info
 let UserModel
