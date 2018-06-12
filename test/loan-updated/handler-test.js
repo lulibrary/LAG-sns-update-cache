@@ -68,7 +68,7 @@ describe('Loan updated lambda handler tests', () => {
       let testUserId = uuid()
       const testTitle = uuid()
 
-      sandbox.stub(Cache.prototype, 'updateUserWithAddLoan').resolves(true)
+      sandbox.stub(Cache.prototype, 'addLoanToUser').resolves(true)
 
       const loanData = {
         item_loan: {
@@ -189,7 +189,7 @@ describe('Loan updated lambda handler tests', () => {
       let testUserId = uuid()
       const testTitle = uuid()
 
-      sandbox.stub(Cache.prototype, 'updateUserWithAddLoan').resolves(true)
+      sandbox.stub(Cache.prototype, 'addLoanToUser').resolves(true)
 
       const loanData = {
         item_loan: {

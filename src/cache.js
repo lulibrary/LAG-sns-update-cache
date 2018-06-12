@@ -30,35 +30,47 @@ class Cache {
     return this.models.UserModel.get(userID)
       .then(user => {
         if (user) {
-          return {
-            'add': {
-              'loan': user.addLoan,
-              'request': user.addRequest
-            },
-            'delete': {
-              'loan': user.deleteLoan,
-              'request': user.deleteRequest
-            }
-          }[operation][itemType].call(user, itemID).save()
+          return this.callOperationOnUser(user, operation, itemType, itemID)
         } else {
           return this.usersQueue.sendMessage(userID)
         }
       })
   }
 
-  updateUserWithAddLoan (userID, loanID) {
+  callOperationOnUser (user, operation, itemType, itemID) {
+    const userMethods = {
+      'add': {
+        'loan': user.addLoan,
+        'request': user.addRequest
+      },
+      'delete': {
+        'loan': user.deleteLoan,
+        'request': user.deleteRequest
+      }
+    }
+
+    if (userMethods[operation] && userMethods[operation][itemType]) {
+      return userMethods[operation][itemType].call(user, itemID).save()
+    } else if (userMethods[operation]) {
+      throw new Error(`Invalid item type ${itemType}`)
+    } else {
+      throw new Error(`Invalid operation ${operation}`)
+    }
+  }
+
+  addLoanToUser (userID, loanID) {
     return this.updateUserItem(userID, loanID, 'add', 'loan')
   }
 
-  updateUserWithAddRequest (userID, requestID) {
+  addRequestToUser (userID, requestID) {
     return this.updateUserItem(userID, requestID, 'add', 'request')
   }
 
-  updateUserWithDeleteLoan (userID, loanID) {
+  deleteLoanFromUser (userID, loanID) {
     return this.updateUserItem(userID, loanID, 'delete', 'loan')
   }
 
-  updateUserWithDeleteRequest (userID, requestID) {
+  deleteRequestFromUser (userID, requestID) {
     return this.updateUserItem(userID, requestID, 'delete', 'request')
   }
 
@@ -73,14 +85,14 @@ class Cache {
   handleLoanReturned (itemLoan) {
     return Promise.all([
       this.deleteLoan(itemLoan.loan_id),
-      this.updateUserWithDeleteLoan(itemLoan.user_id, itemLoan.loan_id)
+      this.deleteLoanFromUser(itemLoan.user_id, itemLoan.loan_id)
     ])
   }
 
   handleLoanUpdate (itemLoan) {
     return Promise.all([
       this.updateLoan(itemLoan),
-      this.updateUserWithAddLoan(itemLoan.user_id, itemLoan.loan_id)
+      this.addLoanToUser(itemLoan.user_id, itemLoan.loan_id)
     ])
   }
 }
