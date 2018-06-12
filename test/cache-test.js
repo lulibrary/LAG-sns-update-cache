@@ -17,6 +17,12 @@ let wires = []
 const Queue = require('@lulibrary/lag-utils/src/queue')
 const Schemas = require('@lulibrary/lag-alma-utils')
 
+const tableMap = new Map([
+  ['user', 'userTable'],
+  ['loan', 'loanTable'],
+  ['request', 'requestTable']
+])
+
 // Module under test
 const Cache = rewire('../src/cache')
 
@@ -29,16 +35,16 @@ describe('cache tests', () => {
 
   describe('constructor tests', () => {
     it('should create a queue object on the Cache', () => {
-      let testCache = new Cache({})
+      let testCache = new Cache(tableMap)
       testCache.usersQueue.should.be.an.instanceOf(Queue)
     })
 
     it('should call createModel with the key and value of each property of the supplied object', () => {
-      let tables = {
-        user: 'userTable',
-        loan: 'loanTable',
-        test: 'testTable'
-      }
+      let tables = new Map([
+        ['user', 'userTable'],
+        ['loan', 'loanTable'],
+        ['test', 'testTable']
+      ])
 
       let createModelStub = sandbox.stub(Cache.prototype, 'createModelByType')
 
@@ -57,7 +63,7 @@ describe('cache tests', () => {
         new Map([['loan', loanSchemaStub]])
       ))
 
-      let testCache = new Cache({})
+      let testCache = new Cache(new Map())
 
       testCache.createModelByType('loan', 'loanTable')
       loanSchemaStub.should.have.been.calledOnce
@@ -67,9 +73,7 @@ describe('cache tests', () => {
 
   describe('addRequestToUser tests', () => {
     it('should call get on the user model', () => {
-      let testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
       let userGetStub = sandbox.stub(testCache.models.UserModel, 'get')
       userGetStub.resolves({
         addRequest: () => {
@@ -86,9 +90,7 @@ describe('cache tests', () => {
     })
 
     it('should call addRequest on the user if the user is found', () => {
-      let testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       let userGetStub = sandbox.stub(testCache.models.UserModel, 'get')
       let addRequestStub = sandbox.stub()
@@ -106,9 +108,7 @@ describe('cache tests', () => {
     })
 
     it('should call sendMessage on the queue if the user is not found', () => {
-      let testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       let userGetStub = sandbox.stub(testCache.models.UserModel, 'get')
       let sendMessageStub = sandbox.stub(testCache.usersQueue, 'sendMessage')
@@ -124,9 +124,8 @@ describe('cache tests', () => {
 
   describe('addLoanToUser tests', () => {
     it('should call get on the user model', () => {
-      let testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
+
       let userGetStub = sandbox.stub(testCache.models.UserModel, 'get')
       userGetStub.resolves({
         addLoan: () => {
@@ -143,9 +142,7 @@ describe('cache tests', () => {
     })
 
     it('should call addLoan on the user if the user is found', () => {
-      let testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       let userGetStub = sandbox.stub(testCache.models.UserModel, 'get')
       let addLoanStub = sandbox.stub()
@@ -163,9 +160,7 @@ describe('cache tests', () => {
     })
 
     it('should call sendMessage on the queue if the user is not found', () => {
-      let testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       let userGetStub = sandbox.stub(testCache.models.UserModel, 'get')
       let sendMessageStub = sandbox.stub(testCache.usersQueue, 'sendMessage')
@@ -181,9 +176,7 @@ describe('cache tests', () => {
 
   describe('updateLoan tests', () => {
     it('should call LoanModel with new', () => {
-      const testCache = new Cache({
-        loan: 'loanTable'
-      })
+      let testCache = new Cache(tableMap)
 
       let LoanModelStub = sandbox.stub(testCache.models, 'LoanModel')
       LoanModelStub.returns({
@@ -196,9 +189,7 @@ describe('cache tests', () => {
     })
 
     it('should call Loan#save', () => {
-      const testCache = new Cache({
-        loan: 'loanTable'
-      })
+      let testCache = new Cache(tableMap)
 
       let saveStub = sandbox.stub(testCache.models.LoanModel.prototype, 'save')
       saveStub.resolves(true)
@@ -211,9 +202,7 @@ describe('cache tests', () => {
 
   describe('handle loan update tests', () => {
     it('should call updateLoan', () => {
-      const testCache = new Cache({
-        loan: 'loanTable'
-      })
+      let testCache = new Cache(tableMap)
 
       let updateLoanStub = sandbox.stub(testCache, 'updateLoan')
       updateLoanStub.resolves(true)
@@ -232,9 +221,7 @@ describe('cache tests', () => {
     })
 
     it('should call addLoanToUser', () => {
-      const testCache = new Cache({
-        loan: 'loanTable'
-      })
+      let testCache = new Cache(tableMap)
 
       sandbox.stub(testCache, 'updateLoan').resolves(true)
 
@@ -251,9 +238,7 @@ describe('cache tests', () => {
 
   describe('updateUserItem method tests', () => {
     it('should call user#addLoan for parameters ["add", "loan"]', () => {
-      const testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const itemID = uuid()
 
@@ -273,9 +258,7 @@ describe('cache tests', () => {
     })
 
     it('should call user#addRequest for parameters ["add", "request"]', () => {
-      const testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const itemID = uuid()
 
@@ -295,9 +278,7 @@ describe('cache tests', () => {
     })
 
     it('should call user#addRequest for parameters ["delete", "loan"]', () => {
-      const testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const itemID = uuid()
 
@@ -317,9 +298,7 @@ describe('cache tests', () => {
     })
 
     it('should call user#addRequest for parameters ["add", "request"]', () => {
-      const testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const itemID = uuid()
 
@@ -339,9 +318,7 @@ describe('cache tests', () => {
     })
 
     it('should call Queue#sendMessage if no user item is found', () => {
-      const testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const userID = uuid()
 
@@ -357,9 +334,7 @@ describe('cache tests', () => {
 
   describe('deleteLoanFromUser tests', () => {
     it('should call updateUserItem with parameters ["delete", "loan"]', () => {
-      const testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const userID = uuid()
       const loanID = uuid()
@@ -372,9 +347,7 @@ describe('cache tests', () => {
     })
 
     it('should call updateUserItem with parameters ["delete", "loan"]', () => {
-      const testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const userID = uuid()
       const requestID = uuid()
@@ -389,9 +362,7 @@ describe('cache tests', () => {
 
   describe('deleteLoan method tests', () => {
     it('should call delete on the Loan model', () => {
-      const testCache = new Cache({
-        loan: 'loanTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const loanID = uuid()
 
@@ -405,9 +376,7 @@ describe('cache tests', () => {
 
   describe('handleLoanReturned method tests', () => {
     it('should call updateLoan with the loan ID', () => {
-      const testCache = new Cache({
-        loan: 'loanTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const testItemLoan = {
         loan_id: uuid(),
@@ -425,9 +394,7 @@ describe('cache tests', () => {
     })
 
     it('should call deleteLoanFromUser with the user ID and loan ID', () => {
-      const testCache = new Cache({
-        loan: 'loanTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const testItemLoan = {
         loan_id: uuid(),
@@ -447,9 +414,7 @@ describe('cache tests', () => {
 
   describe('callOperationOnUser method tests', () => {
     it('should call the operation correctly for valid inputs', () => {
-      const testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       let addLoanStub = sandbox.stub()
       addLoanStub.returns({
@@ -467,9 +432,7 @@ describe('cache tests', () => {
     })
 
     it('should throw an error if the operation is valid but the item type is not', () => {
-      const testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const testUser = {}
 
@@ -477,13 +440,60 @@ describe('cache tests', () => {
     })
 
     it('should throw an error if the operation is not valid', () => {
-      const testCache = new Cache({
-        user: 'userTable'
-      })
+      let testCache = new Cache(tableMap)
 
       const testUser = {}
 
       expect(() => testCache.callOperationOnUser(testUser, 'INVALID', 'loan', 'a loan')).to.throw('Invalid operation INVALID')
+    })
+  })
+
+  describe('createInstance method tests', () => {
+    let oldLCTN
+    let oldRCTN
+    let oldUCTN
+
+    before(() => {
+      oldLCTN = process.env.LoanCacheTableName
+      oldRCTN = process.env.RequestCacheTableName
+      oldUCTN = process.env.UserCacheTableName
+    })
+
+    after(() => {
+      process.env.LoanCacheTableName = oldLCTN
+      process.env.RequestCacheTableName = oldRCTN
+      process.env.UserCacheTableName = oldUCTN
+    })
+    it('should return an instance of Cache', () => {
+      Cache.createInstance().should.be.an.instanceOf(Cache)
+    })
+
+    it('should return an instance of Cache with all models if all env variables are set', () => {
+      process.env.LoanCacheTableName = 'loanTable'
+      process.env.RequestCacheTableName = 'requestTable'
+      process.env.UserCacheTableName = 'userTable'
+
+      let testCache = Cache.createInstance()
+
+      testCache.models.should.have.own.property('LoanModel')
+      testCache.models.should.have.own.property('RequestModel')
+      testCache.models.should.have.own.property('UserModel')
+
+      delete process.env.LoanCacheTableName
+      delete process.env.RequestCacheTableName
+      delete process.env.UserCacheTableName
+    })
+
+    it('should not create models for missing env variables', () => {
+      process.env.LoanCacheTableName = 'loanTable'
+
+      let testCache = Cache.createInstance()
+
+      testCache.models.should.have.own.property('LoanModel')
+      testCache.models.should.not.have.own.property('RequestModel')
+      testCache.models.should.not.have.own.property('UserModel')
+
+      delete process.env.LoanCacheTableName
     })
   })
 })

@@ -4,10 +4,7 @@ const Cache = require('../cache')
 module.exports.handle = (event, context, callback) => {
   let loanData
 
-  let almaCache = new Cache({
-    loan: process.env.LoanCacheTableName,
-    user: process.env.UserCacheTableName
-  })
+  const almaCache = Cache.createInstance()
 
   Promise.resolve()
     .then(() => {

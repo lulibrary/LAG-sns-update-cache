@@ -46,6 +46,8 @@ describe('Loan updated lambda handler tests', () => {
       testLoanTable = process.env.LoanCacheTableName
       testUserTable = process.env.UserCacheTableName
 
+      console.log(process.env.LoanCacheTableName)
+
       UserModel = Schemas.UserSchema(testUserTable)
       LoanModel = Schemas.LoanSchema(testLoanTable)
       process.env.UsersQueueName = testQueueName
