@@ -26,7 +26,7 @@ const Schemas = require('@lulibrary/lag-alma-utils')
 const Cache = require('../../src/cache')
 
 // Module under test
-const LoanCreatedHandler = require('../../src/loan-created/handler')
+const LoanUpdatedHandler = require('../../src/loan-updated/handler')
 
 // Test info
 let UserModel
@@ -89,7 +89,7 @@ describe('Loan created lambda handler tests', () => {
 
       const runTest = () => {
         return new Promise((resolve, reject) => {
-          LoanCreatedHandler.handle(input, null, (err, data) => {
+          LoanUpdatedHandler.handle(input, null, (err, data) => {
             return err ? reject(err) : resolve(data)
           })
         })
@@ -148,7 +148,7 @@ describe('Loan created lambda handler tests', () => {
 
       const runTest = () => {
         return new Promise((resolve, reject) => {
-          LoanCreatedHandler.handle(input, null, (err, data) => {
+          LoanUpdatedHandler.handle(input, null, (err, data) => {
             return err ? reject(err) : resolve(data)
           })
         })
@@ -179,6 +179,72 @@ describe('Loan created lambda handler tests', () => {
         loan_ids: [],
         request_ids: []
       })
+        .then(() => {
+          return runTest()
+        })
+    })
+
+    it('should overwrite a loan record in the database', () => {
+      let testLoanId = uuid()
+      let testUserId = uuid()
+      const testTitle = uuid()
+
+      sandbox.stub(Cache.prototype, 'updateUserWithLoan').resolves(true)
+
+      const loanData = {
+        item_loan: {
+          user_id: testUserId,
+          loan_id: testLoanId,
+          title: testTitle,
+          due_date: '1970-01-01T00:00:01'
+        }
+      }
+
+      const input = {
+        Records: [{
+          Sns: {
+            Message: JSON.stringify(loanData)
+          }
+        }]
+      }
+
+      const runTest = () => {
+        return new Promise((resolve, reject) => {
+          LoanUpdatedHandler.handle(input, null, (err, data) => {
+            return err ? reject(err) : resolve(data)
+          })
+        })
+          .then(() => {
+            return checkExists()
+          })
+      }
+
+      const checkExists = () => {
+        return docClient.get({
+          TableName: testLoanTable,
+          Key: {
+            loan_id: testLoanId
+          }
+        }).promise()
+          .then((data) => {
+            data.Item.should.deep.equal({
+              user_id: testUserId,
+              loan_id: testLoanId,
+              title: testTitle,
+              due_date: '1970-01-01T00:00:01',
+              expiry_date: 1
+            })
+          })
+      }
+
+      const inititalTestLoan = {
+        loan_id: testLoanId,
+        user_id: testUserId,
+        title: `an-old-incorrect-title-${uuid()}`,
+        author: `an-old-incorrect-author-${uuid()}`
+      }
+
+      return LoanModel.create(inititalTestLoan)
         .then(() => {
           return runTest()
         })
@@ -216,7 +282,7 @@ describe('Loan created lambda handler tests', () => {
       }
 
       return new Promise((resolve, reject) => {
-        LoanCreatedHandler.handle(input, null, (err, data) => {
+        LoanUpdatedHandler.handle(input, null, (err, data) => {
           return err ? reject(err) : resolve(data)
         })
       })
