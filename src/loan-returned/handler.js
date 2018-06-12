@@ -12,12 +12,10 @@ module.exports.handle = (event, context, callback) => {
   Promise.resolve()
     .then(() => {
       loanData = extractMessageData(event)
+      return almaCache.handleLoanReturned(loanData.item_loan)
     })
     .then(() => {
-      return almaCache.handleLoanUpdate(loanData.item_loan)
-    })
-    .then(() => {
-      callback(null, `Request ${loanData.item_loan.loan_id} successfully updated`)
+      callback(null, `Loan ${loanData.item_loan.loan_id} successfully removed from cache`)
     })
     .catch(callback)
 }
