@@ -40,7 +40,7 @@ const testQueueUrl = 'userQueueURL'
 
 let mocks = []
 
-describe('Loan created lambda handler tests', () => {
+describe('Loan updated lambda handler tests', () => {
   describe('end to end tests', () => {
     before(() => {
       testLoanTable = process.env.LoanCacheTableName
@@ -63,7 +63,7 @@ describe('Loan created lambda handler tests', () => {
       delete process.env.UsersQueueOwner
     })
 
-    it('should create a a new loan record in the database', () => {
+    it('should create a new loan record in the database', () => {
       let testLoanId = uuid()
       let testUserId = uuid()
       const testTitle = uuid()
@@ -189,7 +189,7 @@ describe('Loan created lambda handler tests', () => {
       let testUserId = uuid()
       const testTitle = uuid()
 
-      sandbox.stub(Cache.prototype, 'updateUserWithLoan').resolves(true)
+      sandbox.stub(Cache.prototype, 'updateUserWithAddLoan').resolves(true)
 
       const loanData = {
         item_loan: {
