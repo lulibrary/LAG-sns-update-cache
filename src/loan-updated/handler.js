@@ -12,9 +12,7 @@ module.exports.handle = (event, context, callback) => {
   }
 
   almaCache.handleLoanUpdate(loanData.item_loan)
-    .then(() => {
-      callback(null, generateSuccessMessage(loanData.item_loan.loan_id))
-    })
+    .then(() => callback(null, generateSuccessMessage(loanData.item_loan.loan_id)))
     .catch(callback)
 }
 
