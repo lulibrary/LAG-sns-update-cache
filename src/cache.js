@@ -15,6 +15,7 @@ const modelNamesByType = new Map([
 
 class Cache {
   constructor (tables) {
+    console.log('name: ', process.env.UsersQueueName, 'owner: ', process.env.UsersQueueOwner)
     this.usersQueue = new Queue(process.env.UsersQueueName, process.env.UsersQueueOwner)
     this.models = {}
     tables.forEach((tableName, type) => tableName ? this.createModelByType(type, tableName) : null)
@@ -95,18 +96,6 @@ class Cache {
       this.addLoanToUser(itemLoan.user_id, itemLoan.loan_id)
     ])
   }
-}
-
-Cache.createInstance = () => {
-  let tables = new Map([
-    ['loan', process.env.LoanCacheTableName],
-    ['request', process.env.RequestCacheTableName],
-    ['user', process.env.UserCacheTableName]
-  ])
-
-  console.log(tables)
-
-  return new Cache(tables)
 }
 
 module.exports = Cache

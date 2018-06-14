@@ -23,6 +23,7 @@ const AWS = require('aws-sdk')
 const docClient = new AWS.DynamoDB.DocumentClient({ region: 'eu-west-2', endpoint: 'http://127.0.0.1:8000' })
 
 const Schemas = require('@lulibrary/lag-alma-utils')
+const Queue = require('@lulibrary/lag-utils/src/queue')
 
 const Cache = require('../../src/cache')
 
@@ -193,13 +194,7 @@ describe('Loan returned lambda handler tests', () => {
       const testTitle = uuid()
 
       sandbox.stub(Cache.prototype, 'deleteLoan').resolves(true)
-      const sendMessageStub = sandbox.stub()
-      sendMessageStub.callsArgWith(1, null, true)
-      AWS_MOCK.mock('SQS', 'sendMessage', sendMessageStub)
-      AWS_MOCK.mock('SQS', 'getQueueUrl', {
-        QueueUrl: testQueueUrl
-      })
-      mocks.push('SQS')
+      const sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
 
       const loanData = {
         item_loan: {
@@ -224,10 +219,7 @@ describe('Loan returned lambda handler tests', () => {
         })
       })
         .then(() => {
-          sendMessageStub.should.have.been.calledWith({
-            MessageBody: testUserId,
-            QueueUrl: testQueueUrl
-          })
+          sendMessageStub.should.have.been.calledWith(testUserId)
         })
     })
   })

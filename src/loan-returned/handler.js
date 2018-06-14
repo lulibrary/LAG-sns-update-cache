@@ -1,10 +1,9 @@
 const extractMessageData = require('../extract-message-data')
-const Cache = require('../cache')
 
 module.exports.handle = (event, context, callback) => {
   let loanData
 
-  const almaCache = Cache.createInstance()
+  const almaCache = require('../cache-from-env')
 
   Promise.resolve()
     .then(() => {
