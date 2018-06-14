@@ -28,7 +28,7 @@ const Queue = require('@lulibrary/lag-utils/src/queue')
 const Cache = require('../../src/cache')
 
 // Module under test
-const LoanReturnedHandler = require('../../src/loan-returned/handler')
+let LoanReturnedHandler
 
 // Test info
 let UserModel
@@ -51,6 +51,8 @@ describe('Loan returned lambda handler tests', () => {
       LoanModel = Schemas.LoanSchema(testLoanTable)
       process.env.UsersQueueName = testQueueName
       process.env.UsersQueueOwner = testQueueOwner
+
+      LoanReturnedHandler = require('../../src/loan-returned/handler')
     })
 
     afterEach(() => {

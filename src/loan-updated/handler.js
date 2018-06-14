@@ -1,17 +1,23 @@
 const extractMessageData = require('../extract-message-data')
+const almaCache = require('../cache-from-env')
 
 module.exports.handle = (event, context, callback) => {
   let loanData
 
-  const almaCache = require('../cache-from-env')
+  try {
+    loanData = extractMessageData(event)
+  } catch (e) {
+    callback(e)
+    return
+  }
 
-  Promise.resolve()
+  almaCache.handleLoanUpdate(loanData.item_loan)
     .then(() => {
-      loanData = extractMessageData(event)
-      return almaCache.handleLoanUpdate(loanData.item_loan)
-    })
-    .then(() => {
-      callback(null, `Loan ${loanData.item_loan.loan_id} successfully updated in cache`)
+      callback(null, generateSuccessMessage(loanData.item_loan.loan_id))
     })
     .catch(callback)
+}
+
+const generateSuccessMessage = (id) => {
+  return `Loan ${id} successfully updated in cache`
 }
