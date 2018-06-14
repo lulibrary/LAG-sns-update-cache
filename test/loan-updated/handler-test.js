@@ -68,6 +68,14 @@ describe('Loan updated lambda handler tests', () => {
       delete process.env.UsersQueueOwner
     })
 
+    it('should callback with an error if extractMessageData throws an error', () => {
+      return new Promise((resolve, reject) => {
+        LoanUpdatedHandler.handle({}, null, (err, data) => {
+          err ? reject(err) : resolve(data)
+        })
+      }).should.eventually.be.rejectedWith('Could not parse SNS message')
+    })
+
     it('should create a new loan record in the database', () => {
       let testLoanId = uuid()
       let testUserId = uuid()
