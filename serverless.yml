@@ -24,13 +24,15 @@ provider:
   stage: ${opt:stage}
 
 functions:
-  LoanUpdated: # Handles SNS events of type LOAN_CREATED and LOAN_DUE_DATE
+  LoanUpdated: # Handles SNS events of type LOAN_CREATED, LOAN_DUE_DATE and LOAN_RETURNED
     handler: src/loan-updated/handler.handle
     events:
       - sns:
           arn: ${self:custom.TopicArns.${opt:stage}.LoanCreated}
       - sns:
           arn: ${self:custom.TopicArns.${opt:stage}.LoanDueDate}
+      - sns:
+          arn: ${self:custom.TopicArns.${opt:stage}.LoanRenewed}
     environment:
       UserCacheTableName: ${self:custom.TableNames.userCacheTable}
       LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
@@ -120,9 +122,11 @@ custom:
     stg:
       LoanCreated: ${env:LOAN_CREATED_TOPIC_ARN_STG}
       LoanDueDate: ${env:LOAN_DUE_DATE_TOPIC_ARN_STG}
+      LoanRenewed: ${env:LOAN_RENEWED_TOPIC_ARN_STG}
     prod:
       LoanCreated: ${env:LOAN_CREATED_TOPIC_ARN_PROD}
       LoanDueDate: ${env:LOAN_DUE_DATE_TOPIC_ARN_PROD}
+      LoanRenewed: ${env:LOAN_RENEWED_TOPIC_ARN_PROD}
   TableArns:
     userCacheTable:
       "Fn::GetAtt": [userCacheTable, Arn]
