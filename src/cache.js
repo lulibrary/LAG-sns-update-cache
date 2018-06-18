@@ -15,7 +15,11 @@ const modelNamesByType = new Map([
 
 class Cache {
   constructor (tables) {
-    this.usersQueue = new Queue({ name: process.env.UsersQueueName, owner: process.env.UsersQueueOwner })
+    this.usersQueue = new Queue({
+      name: process.env.UsersQueueName,
+      owner: process.env.UsersQueueOwner,
+      url: process.env.UsersQueueURL
+    })
     this.models = {}
     Object.keys(tables).forEach((type) => this.createModelByType(type, tables[type]))
   }
