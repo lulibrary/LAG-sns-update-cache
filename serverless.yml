@@ -38,6 +38,7 @@ functions:
       LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
       UsersQueueName: ${self:custom.UsersQueueData.Name}
       UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
+      UsersQueueURL: ${self:custom.UsersQueueData.URL}
   LoanReturned:
     handler: src/loan-returned/handler.handle
     events:
@@ -48,6 +49,7 @@ functions:
       LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
       UsersQueueName: ${self:custom.UsersQueueData.Name}
       UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
+      UsersQueueURL: ${self:custom.UsersQueueData.URL}
 
 resources:
   Resources:
@@ -155,6 +157,8 @@ custom:
     Arn:
       "Fn::GetAtt": ["usersQueue", "Arn"]
     Owner: '#{AWS::AccountId}'
+    URL:
+      Ref: usersQueue
 
 plugins:
   - serverless-pseudo-parameters
