@@ -1,5 +1,4 @@
 const AWS_MOCK = require('aws-sdk-mock')
-const AWS = require('aws-sdk')
 
 const sinon = require('sinon')
 const sandbox = sinon.createSandbox()
@@ -19,6 +18,8 @@ dynamoose.local()
 dynamoose.AWS.config.update({
   region: 'eu-west-2'
 })
+const AWS = require('aws-sdk')
+
 const docClient = new AWS.DynamoDB.DocumentClient({ region: 'eu-west-2', endpoint: 'http://127.0.0.1:8000' })
 
 const Schemas = require('@lulibrary/lag-alma-utils')
@@ -27,34 +28,31 @@ const Queue = require('@lulibrary/lag-utils/src/queue')
 const Cache = require('../../src/cache')
 
 // Module under test
-let LoanUpdatedHandler
+let LoanReturnedHandler
 
 // Test info
 let UserModel
 let LoanModel
 
 let testLoanTable, testUserTable
-
 const testQueueName = 'userQueueName'
 const testQueueOwner = 'userQueueOwner'
 const testQueueUrl = 'userQueueURL'
 
 let mocks = []
 
-describe('Loan updated lambda handler tests', () => {
+describe('Loan returned lambda handler tests', () => {
   describe('end to end tests', () => {
     before(() => {
       testLoanTable = process.env.LoanCacheTableName
       testUserTable = process.env.UserCacheTableName
-
-      console.log(process.env.LoanCacheTableName)
 
       UserModel = Schemas.UserSchema(testUserTable)
       LoanModel = Schemas.LoanSchema(testLoanTable)
       process.env.UsersQueueName = testQueueName
       process.env.UsersQueueOwner = testQueueOwner
 
-      LoanUpdatedHandler = require('../../src/loan-updated/handler')
+      LoanReturnedHandler = require('../../src/loan-returned/handler')
     })
 
     afterEach(() => {
@@ -70,18 +68,18 @@ describe('Loan updated lambda handler tests', () => {
 
     it('should callback with an error if extractMessageData throws an error', () => {
       return new Promise((resolve, reject) => {
-        LoanUpdatedHandler.handle({}, null, (err, data) => {
+        LoanReturnedHandler.handle({}, null, (err, data) => {
           err ? reject(err) : resolve(data)
         })
       }).should.eventually.be.rejectedWith('Could not parse SNS message')
     })
 
-    it('should create a new loan record in the database', () => {
+    it('should delete an existing loan record from the database', () => {
       let testLoanId = uuid()
       let testUserId = uuid()
       const testTitle = uuid()
 
-      sandbox.stub(Cache.prototype, 'addLoanToUser').resolves(true)
+      sandbox.stub(Cache.prototype, 'deleteLoanFromUser').resolves(true)
 
       const loanData = {
         item_loan: {
@@ -102,7 +100,7 @@ describe('Loan updated lambda handler tests', () => {
 
       const runTest = () => {
         return new Promise((resolve, reject) => {
-          LoanUpdatedHandler.handle(input, null, (err, data) => {
+          LoanReturnedHandler.handle(input, null, (err, data) => {
             return err ? reject(err) : resolve(data)
           })
         })
@@ -119,17 +117,18 @@ describe('Loan updated lambda handler tests', () => {
           }
         }).promise()
           .then((data) => {
-            data.Item.should.deep.equal({
-              user_id: testUserId,
-              loan_id: testLoanId,
-              title: testTitle,
-              due_date: '1970-01-01T00:00:01',
-              expiry_date: 1
-            })
+            data.should.deep.equal({})
           })
       }
 
-      return LoanModel.delete(testLoanId)
+      const existing = {
+        user_id: testUserId,
+        loan_id: testLoanId,
+        title: testTitle,
+        due_date: '1970-01-01T00:00:01'
+      }
+
+      return LoanModel.create(existing)
         .then(() => {
           return runTest()
         })
@@ -141,6 +140,8 @@ describe('Loan updated lambda handler tests', () => {
       let testLoanId = uuid()
       let testUserId = uuid()
       const testTitle = uuid()
+
+      sandbox.stub(Cache.prototype, 'deleteLoan').resolves(true)
 
       const loanData = {
         item_loan: {
@@ -161,7 +162,7 @@ describe('Loan updated lambda handler tests', () => {
 
       const runTest = () => {
         return new Promise((resolve, reject) => {
-          LoanUpdatedHandler.handle(input, null, (err, data) => {
+          LoanReturnedHandler.handle(input, null, (err, data) => {
             return err ? reject(err) : resolve(data)
           })
         })
@@ -180,7 +181,7 @@ describe('Loan updated lambda handler tests', () => {
           .then((data) => {
             data.Item.should.deep.equal({
               primary_id: testUserId,
-              loan_ids: [testLoanId],
+              loan_ids: [],
               request_ids: [],
               expiry_date: 7200
             })
@@ -189,75 +190,9 @@ describe('Loan updated lambda handler tests', () => {
 
       return UserModel.create({
         primary_id: testUserId,
-        loan_ids: [],
+        loan_ids: [testLoanId],
         request_ids: []
       })
-        .then(() => {
-          return runTest()
-        })
-    })
-
-    it('should overwrite a loan record in the database', () => {
-      let testLoanId = uuid()
-      let testUserId = uuid()
-      const testTitle = uuid()
-
-      sandbox.stub(Cache.prototype, 'addLoanToUser').resolves(true)
-
-      const loanData = {
-        item_loan: {
-          user_id: testUserId,
-          loan_id: testLoanId,
-          title: testTitle,
-          due_date: '1970-01-01T00:00:01'
-        }
-      }
-
-      const input = {
-        Records: [{
-          Sns: {
-            Message: JSON.stringify(loanData)
-          }
-        }]
-      }
-
-      const runTest = () => {
-        return new Promise((resolve, reject) => {
-          LoanUpdatedHandler.handle(input, null, (err, data) => {
-            return err ? reject(err) : resolve(data)
-          })
-        })
-          .then(() => {
-            return checkExists()
-          })
-      }
-
-      const checkExists = () => {
-        return docClient.get({
-          TableName: testLoanTable,
-          Key: {
-            loan_id: testLoanId
-          }
-        }).promise()
-          .then((data) => {
-            data.Item.should.deep.equal({
-              user_id: testUserId,
-              loan_id: testLoanId,
-              title: testTitle,
-              due_date: '1970-01-01T00:00:01',
-              expiry_date: 1
-            })
-          })
-      }
-
-      const inititalTestLoan = {
-        loan_id: testLoanId,
-        user_id: testUserId,
-        title: `an-old-incorrect-title-${uuid()}`,
-        author: `an-old-incorrect-author-${uuid()}`
-      }
-
-      return LoanModel.create(inititalTestLoan)
         .then(() => {
           return runTest()
         })
@@ -268,7 +203,7 @@ describe('Loan updated lambda handler tests', () => {
       let testUserId = uuid()
       const testTitle = uuid()
 
-      sandbox.stub(Cache.prototype, 'updateLoan').resolves(true)
+      sandbox.stub(Cache.prototype, 'deleteLoan').resolves(true)
       const sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
 
       const loanData = {
@@ -289,7 +224,7 @@ describe('Loan updated lambda handler tests', () => {
       }
 
       return new Promise((resolve, reject) => {
-        LoanUpdatedHandler.handle(input, null, (err, data) => {
+        LoanReturnedHandler.handle(input, null, (err, data) => {
           return err ? reject(err) : resolve(data)
         })
       })
