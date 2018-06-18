@@ -38,6 +38,7 @@ functions:
       LoanCacheTableName: ${self:custom.TableNames.loanCacheTable}
       UsersQueueName: ${self:custom.UsersQueueData.Name}
       UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
+      UsersQueueURL: ${self:custom.UsersQueueData.URL}
   LoanReturned:
     handler: src/loan-returned/handler.handle
     events:
