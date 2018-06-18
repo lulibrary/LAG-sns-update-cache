@@ -42,8 +42,8 @@
     "uuid": "^3.2.1"
   },
   "dependencies": {
-    "@lulibrary/lag-alma-utils": "git+ssh://git@github.com/lulibrary/LAG-Alma-Utils.git#v0.3.3",
-    "@lulibrary/lag-utils": "git+ssh://git@github.com/lulibrary/LAG-Utils.git#v0.3.2",
+    "@lulibrary/lag-alma-utils": "git+ssh://git@github.com/lulibrary/LAG-Alma-Utils.git#v0.4.0",
+    "@lulibrary/lag-utils": "git+ssh://git@github.com/lulibrary/LAG-Utils.git#v0.3.3",
     "serverless-pseudo-parameters": "^1.6.0"
   }
 }
