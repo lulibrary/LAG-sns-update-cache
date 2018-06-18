@@ -22,6 +22,22 @@ provider:
   runtime: nodejs6.10
   region: ${opt:region}
   stage: ${opt:stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - sqs:SendMessage
+        - sqs:GetQueueURL
+      Resource: ${self:custom.UsersQueueData.Arn}
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+        - dynamodb:DescribeTable
+      Resource:
+        - ${self:custom.TableArns.userCacheTable}
+        - ${self:custom.TableArns.loanCacheTable}
+        - ${self:custom.TableArns.requestCacheTable}
 
 functions:
   LoanUpdated: # Handles SNS events of type LOAN_CREATED, LOAN_DUE_DATE and LOAN_RETURNED
