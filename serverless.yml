@@ -72,12 +72,11 @@ resources:
     userCacheTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:service}-userCacheTable-${opt:stage}
         AttributeDefinitions:
-          - AttributeName: user_id
+          - AttributeName: primary_id
             AttributeType: S
         KeySchema:
-          - AttributeName: user_id
+          - AttributeName: primary_id
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 5
@@ -85,7 +84,6 @@ resources:
     loanCacheTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:service}-loanCacheTable-${opt:stage}
         AttributeDefinitions:
           - AttributeName: loan_id
             AttributeType: S
@@ -98,7 +96,6 @@ resources:
     requestCacheTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:service}-requestCacheTable-${opt:stage}
         AttributeDefinitions:
           - AttributeName: request_id
             AttributeType: S
@@ -165,8 +162,10 @@ custom:
     requestCacheTable:
       "Fn::GetAtt": [requestCacheTable, Arn]
   TableNames:
-    userCacheTable: ${self:service}-userCacheTable-${opt:stage}
-    loanCacheTable: ${self:service}-loanCacheTable-${opt:stage}
+    userCacheTable: 
+      Ref: userCacheTable
+    loanCacheTable:
+      Ref: loanCacheTable
   UsersQueueData:
     Name:
       "Fn::GetAtt": ["usersQueue", "QueueName"]
