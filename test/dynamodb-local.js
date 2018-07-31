@@ -63,6 +63,7 @@ const testLoanTable = `loanTable_${uuid()}`
 const testRequestTable = `requestTable_${uuid()}`
 
 before(function () {
+  process.env.RequestCacheTableName = testRequestTable
   process.env.LoanCacheTableName = testLoanTable
   process.env.UserCacheTableName = testUserTable
 
@@ -85,13 +86,14 @@ before(function () {
         },
         {
           name: testRequestTable,
-          key: 'loan_id'
+          key: 'request_id'
         }
       ])
     })
 })
 
 after(() => {
+  delete process.env.RequestCacheTableName
   delete process.env.LoanCacheTableName
   delete process.env.UserCacheTableName
 

@@ -86,6 +86,10 @@ class Cache {
     return this.models.LoanModel.delete(loanID)
   }
 
+  updateRequest (userRequest) {
+    return new this.models.RequestModel(userRequest).save()
+  }
+
   handleLoanReturned (itemLoan) {
     return Promise.all([
       this.deleteLoan(itemLoan.loan_id),
@@ -97,6 +101,13 @@ class Cache {
     return Promise.all([
       this.updateLoan(itemLoan),
       this.addLoanToUser(itemLoan.user_id, itemLoan.loan_id)
+    ])
+  }
+
+  handleRequestUpdate (userRequest) {
+    return Promise.all([
+      this.updateRequest(userRequest),
+      this.addRequestToUser(userRequest.user_primary_id, userRequest.request_id)
     ])
   }
 }
