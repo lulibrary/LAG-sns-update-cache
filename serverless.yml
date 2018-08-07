@@ -66,6 +66,19 @@ functions:
       UsersQueueName: ${self:custom.UsersQueueData.Name}
       UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
       UsersQueueURL: ${self:custom.UsersQueueData.URL}
+  RequestUpdated: # Handles SNS events of type LOAN_CREATED, LOAN_DUE_DATE and LOAN_RETURNED
+    handler: src/request-updated/handler.handle
+    events:
+      - sns:
+          arn: ${self:custom.TopicArns.${opt:stage}.RequestCreated}
+      - sns:
+          arn: ${self:custom.TopicArns.${opt:stage}.RequestPlacedOnShelf}
+    environment:
+      UserCacheTableName: ${self:custom.TableNames.userCacheTable}
+      RequestCacheTableName: ${self:custom.TableNames.requestCacheTable}
+      UsersQueueName: ${self:custom.UsersQueueData.Name}
+      UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
+      UsersQueueURL: ${self:custom.UsersQueueData.URL}
 
 resources:
   Resources:
@@ -157,11 +170,15 @@ custom:
       LoanDueDate: ${env:LOAN_DUE_DATE_TOPIC_ARN_STG}
       LoanReturned: ${env:LOAN_RETURNED_TOPIC_ARN_STG}
       LoanRenewed: ${env:LOAN_RENEWED_TOPIC_ARN_STG}
+      RequestCreated: ${env:REQUEST_CREATED_TOPIC_ARN_STG}
+      RequestPlacedOnShelf: ${env:LOAN_PLACED_ON_SHELF_TOPIC_ARN_STG}
     prod:
       LoanCreated: ${env:LOAN_CREATED_TOPIC_ARN_PROD}
       LoanDueDate: ${env:LOAN_DUE_DATE_TOPIC_ARN_PROD}
       LoanReturned: ${env:LOAN_RETURNED_TOPIC_ARN_PROD}
       LoanRenewed: ${env:LOAN_RENEWED_TOPIC_ARN_PROD}
+      RequestCreated: ${env:REQUEST_CREATED_TOPIC_ARN_PROD}
+      RequestPlacedOnShelf: ${env:LOAN_PLACED_ON_SHELF_TOPIC_ARN_PROD}
   TableArns:
     userCacheTable:
       "Fn::GetAtt": [userCacheTable, Arn]
@@ -174,6 +191,8 @@ custom:
       Ref: userCacheTable
     loanCacheTable:
       Ref: loanCacheTable
+    requestCacheTable:
+      Ref: requestCacheTable
   UsersQueueData:
     Name:
       "Fn::GetAtt": ["usersQueue", "QueueName"]
