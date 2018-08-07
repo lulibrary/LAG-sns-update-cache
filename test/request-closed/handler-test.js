@@ -33,7 +33,7 @@ let RequestClosedHandler
 let UserModel
 let RequestModel
 
-let testLoanTable, testUserTable
+let testRequestTable, testUserTable
 const testQueueName = 'userQueueName'
 const testQueueOwner = 'userQueueOwner'
 const testQueueUrl = 'userQueueURL'
@@ -49,11 +49,11 @@ const handle = (event, ctx) => new Promise((resolve, reject) => {
 describe('Loan returned lambda handler tests', () => {
   describe('end to end tests', () => {
     before(() => {
-      testLoanTable = process.env.RequestCacheTableName
+      testRequestTable = process.env.RequestCacheTableName
       testUserTable = process.env.UserCacheTableName
 
       UserModel = Schemas.UserSchema(testUserTable)
-      RequestModel = Schemas.RequestSchema(testLoanTable)
+      RequestModel = Schemas.RequestSchema(testRequestTable)
       process.env.UsersQueueName = testQueueName
       process.env.UsersQueueOwner = testQueueOwner
 
@@ -72,7 +72,7 @@ describe('Loan returned lambda handler tests', () => {
     })
 
     it('should callback with an error if extractMessageData throws an error', () => {
-      handle({}, null).should.eventually.be.rejectedWith('Could not parse SNS message')
+      return handle({}, null).should.eventually.be.rejectedWith('Could not parse SNS message')
     })
 
     it('should delete an existing loan record from the database', () => {
@@ -101,7 +101,7 @@ describe('Loan returned lambda handler tests', () => {
       }
 
       const runTest = () => {
-        handle(input, null)
+        return handle(input, null)
           .then(() => {
             return checkExists()
           })
@@ -109,7 +109,7 @@ describe('Loan returned lambda handler tests', () => {
 
       const checkExists = () => {
         return docClient.get({
-          TableName: testLoanTable,
+          TableName: testRequestTable,
           Key: {
             request_id: testRequestID
           }
@@ -159,7 +159,7 @@ describe('Loan returned lambda handler tests', () => {
       }
 
       const runTest = () => {
-        handle(input, null)
+        return handle(input, null)
           .then(() => {
             return checkUpdated()
           })
@@ -219,7 +219,7 @@ describe('Loan returned lambda handler tests', () => {
         }]
       }
 
-      handle(input, null)
+      return handle(input, null)
         .then(() => {
           sendMessageStub.should.have.been.calledWith(testUserID)
         })
