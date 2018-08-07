@@ -122,6 +122,14 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:service}-${opt:stage}-usersQueue
+        RedrivePolicy:
+          deadLetterTargetArn: ${self:custom.UsersDLQ.Arn}
+          maxReceiveCount: 3
+    usersDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:service}-${opt:stage}-usersDLQ
+        MessageRetentionPeriod: 1209600
   
   Outputs:
     UserCacheTableArn:
@@ -193,6 +201,10 @@ custom:
     Owner: '#{AWS::AccountId}'
     URL:
       Ref: usersQueue
+  UsersDLQ:
+    Arn:
+      "Fn::GetAtt": ["usersDLQ", "Arn"]
+
 
 plugins:
   - serverless-pseudo-parameters
