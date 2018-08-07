@@ -42,6 +42,12 @@ const testQueueUrl = 'userQueueURL'
 
 let mocks = []
 
+const handle = (event, ctx) => new Promise((resolve, reject) => {
+  RequestUpdatedHandler.handle(event, ctx, (err, data) => {
+    return err ? reject(err) : resolve(data)
+  })
+})
+
 describe('Request updated lambda handler tests', () => {
   describe('end to end tests', () => {
     before(() => {
@@ -303,6 +309,32 @@ describe('Request updated lambda handler tests', () => {
         .then(() => {
           sendMessageStub.should.have.been.calledWith(testUserId)
         })
+    })
+
+    it('should callback with an error if the Cache fails to update', () => {
+      const testUserID = uuid()
+      const testRequestID = uuid()
+      const testTitle = uuid()
+
+      sandbox.stub(Queue.prototype, 'sendMessage').resolves()
+
+      const requestData = {
+        user_request: {
+          user_primary_id: testUserID,
+          title: testTitle
+        }
+      }
+
+      const input = {
+        Records: [{
+          Sns: {
+            Message: JSON.stringify(requestData)
+          }
+        }]
+      }
+
+      return handle(input, null)
+        .should.eventually.be.rejectedWith(`Failed to update Request ${undefined} for User ${testUserID} in Cache`)
     })
   })
 })

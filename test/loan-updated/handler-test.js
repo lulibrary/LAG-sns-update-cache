@@ -313,5 +313,32 @@ describe('Loan updated lambda handler tests', () => {
           sendMessageStub.should.have.been.calledWith(testUserId)
         })
     })
+
+    it('should callback with an error if the Cache fails to update', () => {
+      const testUserID = uuid()
+      const testLoanID = uuid()
+      const testTitle = uuid()
+
+      sandbox.stub(Queue.prototype, 'sendMessage').resolves()
+
+      const loanData = {
+        item_loan: {
+          user_id: testUserID,
+          title: testTitle,
+          due_date: '1970-01-01T00:00:01'
+        }
+      }
+
+      const input = {
+        Records: [{
+          Sns: {
+            Message: JSON.stringify(loanData)
+          }
+        }]
+      }
+
+      return handle(input, null)
+        .should.eventually.be.rejectedWith(`Failed to update Loan ${undefined} for User ${testUserID} in Cache`)
+    })
   })
 })

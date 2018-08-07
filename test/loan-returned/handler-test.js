@@ -42,6 +42,12 @@ const testQueueUrl = 'userQueueURL'
 
 let mocks = []
 
+const handle = (event, ctx) => new Promise((resolve, reject) => {
+  LoanReturnedHandler.handle(event, ctx, (err, data) => {
+    return err ? reject(err) : resolve(data)
+  })
+})
+
 describe('Loan returned lambda handler tests', () => {
   describe('end to end tests', () => {
     before(() => {
@@ -236,6 +242,33 @@ describe('Loan returned lambda handler tests', () => {
         .then(() => {
           sendMessageStub.should.have.been.calledWith(testUserId)
         })
+    })
+
+    it('should callback with an error if the Cache fails to update', () => {
+      const testUserID = uuid()
+      const testLoanID = uuid()
+      const testTitle = uuid()
+
+      const sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
+
+      const loanData = {
+        item_loan: {
+          user_id: testUserID,
+          title: testTitle,
+          due_date: '1970-01-01T00:00:01'
+        }
+      }
+
+      const input = {
+        Records: [{
+          Sns: {
+            Message: JSON.stringify(loanData)
+          }
+        }]
+      }
+
+      return handle(input, null)
+        .should.eventually.be.rejectedWith(`Failed to delete Loan ${undefined} for User ${testUserID} in Cache`)
     })
   })
 })
