@@ -12,6 +12,7 @@ chai.use(chaiAsPromised)
 chai.should()
 
 const uuid = require('uuid/v4')
+const _pick = require('lodash.pick')
 
 // DynamoDB
 const dynamoose = require('dynamoose')
@@ -82,6 +83,7 @@ describe('Request updated lambda handler tests', () => {
       const testTitle = uuid()
 
       sandbox.stub(Cache.prototype, 'addRequestToUser').resolves(true)
+      sandbox.stub(Queue.prototype, 'sendMessage').resolves()
 
       const requestData = {
         user_request: {
@@ -118,7 +120,11 @@ describe('Request updated lambda handler tests', () => {
           }
         }).promise()
           .then((data) => {
-            data.Item.should.deep.equal({
+            _pick(data.Item, [
+              'user_primary_id',
+              'request_id',
+              'title'
+            ]).should.deep.equal({
               user_primary_id: testUserId,
               request_id: testRequestId,
               title: testTitle
@@ -174,10 +180,13 @@ describe('Request updated lambda handler tests', () => {
           }
         }).promise()
           .then((data) => {
-            data.Item.should.deep.equal({
+            _pick(data.Item, [
+              'primary_id',
+              'request_ids',
+              'expiry_date'
+            ]).should.deep.equal({
               primary_id: testUserId,
               request_ids: [testRequestId],
-              loan_ids: [],
               expiry_date: 7200
             })
           })
@@ -199,6 +208,7 @@ describe('Request updated lambda handler tests', () => {
       const testTitle = uuid()
 
       sandbox.stub(Cache.prototype, 'addRequestToUser').resolves(true)
+      sandbox.stub(Queue.prototype, 'sendMessage').resolves()
 
       const requestData = {
         user_request: {
@@ -235,7 +245,11 @@ describe('Request updated lambda handler tests', () => {
           }
         }).promise()
           .then((data) => {
-            data.Item.should.deep.equal({
+            _pick(data.Item, [
+              'user_primary_id',
+              'request_id',
+              'title'
+            ]).should.deep.equal({
               user_primary_id: testUserId,
               request_id: testRequestId,
               title: testTitle
