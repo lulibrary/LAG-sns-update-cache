@@ -1,22 +1,8 @@
 const extractMessageData = require('../extract-message-data')
-const almaCache = require('../cache-from-env')
 const CacheRequest = require('../cache-request')
 const CacheUser = require('../cache-user')
 
 module.exports.handle = (event, context, callback) => {
-  // try {
-  //   const requestData = extractMessageData(event)
-  //   almaCache.handleRequestUpdate(requestData.user_request)
-  //     .then(() => callback(null, generateSuccessMessage(requestData.user_request.request_id)))
-  //     .catch(e => {
-  //       console.log(e)
-  //       callback(e)
-  //     })
-  // } catch (e) {
-  //   console.log(e)
-  //   callback(e)
-  // }
-
   try {
     const requestData = extractMessageData(event)
     Promise.all([
@@ -25,6 +11,9 @@ module.exports.handle = (event, context, callback) => {
     ])
       .then(() => {
         callback(null, generateSuccessMessage(requestData.user_request.request_id))
+      })
+      .catch(e => {
+        callback(new Error(`Failed to update Request ${requestData.user_request.request_id} for User ${requestData.user_request.user_primary_id} in Cache`))
       })
   } catch (e) {
     callback(e)

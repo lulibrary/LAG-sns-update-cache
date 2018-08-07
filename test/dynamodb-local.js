@@ -72,7 +72,7 @@ before(function () {
   process.env.AWS_ACCESS_KEY_ID = uuid()
   process.env.AWS_SECRET_ACCESS_KEY = uuid()
 
-  this.timeout(10000)
+  this.timeout(20000)
   return DB.launch()
     .then(() => {
       return DB.create([

@@ -26,7 +26,7 @@ const docClient = new AWS.DynamoDB.DocumentClient({ region: 'eu-west-2', endpoin
 const Schemas = require('@lulibrary/lag-alma-utils')
 const Queue = require('@lulibrary/lag-utils/src/queue')
 
-const Cache = require('../../src/cache')
+// const Cache = require('../../src/cache')
 
 // Module under test
 let LoanReturnedHandler
@@ -80,7 +80,7 @@ describe('Loan returned lambda handler tests', () => {
       let testUserId = uuid()
       const testTitle = uuid()
 
-      sandbox.stub(Cache.prototype, 'deleteLoanFromUser').resolves(true)
+      // sandbox.stub(Cache.prototype, 'deleteLoanFromUser').resolves(true)
       sandbox.stub(Queue.prototype, 'sendMessage').resolves()
 
       const loanData = {
@@ -143,7 +143,7 @@ describe('Loan returned lambda handler tests', () => {
       let testUserId = uuid()
       const testTitle = uuid()
 
-      sandbox.stub(Cache.prototype, 'deleteLoan').resolves(true)
+      // sandbox.stub(Cache.prototype, 'deleteLoan').resolves(true)
 
       const loanData = {
         item_loan: {
@@ -208,7 +208,7 @@ describe('Loan returned lambda handler tests', () => {
       let testUserId = uuid()
       const testTitle = uuid()
 
-      sandbox.stub(Cache.prototype, 'deleteLoan').resolves(true)
+      // sandbox.stub(Cache.prototype, 'deleteLoan').resolves(true)
       const sendMessageStub = sandbox.stub(Queue.prototype, 'sendMessage')
 
       const loanData = {
