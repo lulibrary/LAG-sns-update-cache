@@ -11,6 +11,7 @@ chai.use(chaiAsPromised)
 chai.should()
 
 const uuid = require('uuid/v4')
+const _pick = require('lodash.pick')
 
 // DynamoDB
 const dynamoose = require('dynamoose')
@@ -80,6 +81,7 @@ describe('Loan returned lambda handler tests', () => {
       const testTitle = uuid()
 
       sandbox.stub(Cache.prototype, 'deleteLoanFromUser').resolves(true)
+      sandbox.stub(Queue.prototype, 'sendMessage').resolves()
 
       const loanData = {
         item_loan: {
@@ -179,10 +181,13 @@ describe('Loan returned lambda handler tests', () => {
           }
         }).promise()
           .then((data) => {
-            data.Item.should.deep.equal({
+            _pick(data.Item, [
+              'primary_id',
+              'loan_ids',
+              'expiry_date'
+            ]).should.deep.equal({
               primary_id: testUserId,
               loan_ids: [],
-              request_ids: [],
               expiry_date: 7200
             })
           })
