@@ -55,7 +55,7 @@ functions:
       UsersQueueName: ${self:custom.UsersQueueData.Name}
       UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
       UsersQueueURL: ${self:custom.UsersQueueData.URL}
-  LoanReturned:
+  LoanReturned: # Handles SNS events of type LOAN_RETURNED
     handler: src/loan-returned/handler.handle
     events:
       - sns:
@@ -66,13 +66,26 @@ functions:
       UsersQueueName: ${self:custom.UsersQueueData.Name}
       UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
       UsersQueueURL: ${self:custom.UsersQueueData.URL}
-  RequestUpdated: # Handles SNS events of type LOAN_CREATED, LOAN_DUE_DATE and LOAN_RETURNED
+  RequestUpdated: # Handles SNS events of type REQUEST_CREATED, REQUEST_PLACED_ON_SHELF
     handler: src/request-updated/handler.handle
     events:
       - sns:
           arn: ${self:custom.TopicArns.${opt:stage}.RequestCreated}
       - sns:
           arn: ${self:custom.TopicArns.${opt:stage}.RequestPlacedOnShelf}
+    environment:
+      UserCacheTableName: ${self:custom.TableNames.userCacheTable}
+      RequestCacheTableName: ${self:custom.TableNames.requestCacheTable}
+      UsersQueueName: ${self:custom.UsersQueueData.Name}
+      UsersQueueOwner: ${self:custom.UsersQueueData.Owner}
+      UsersQueueURL: ${self:custom.UsersQueueData.URL}
+  RequestClosed: # Handles SNS events of type REQUEST_CLOSED and REQUEST_CANCELED
+    handler: src/request-closed/handler.handle
+    events:
+      - sns:
+          arn: ${self:custom.TopicArns.${opt:stage}.RequestClosed}
+      - sns:
+          arn: ${self:custom.TopicArns.${opt:stage}.RequestCanceled}
     environment:
       UserCacheTableName: ${self:custom.TableNames.userCacheTable}
       RequestCacheTableName: ${self:custom.TableNames.requestCacheTable}
@@ -172,6 +185,8 @@ custom:
       LoanRenewed: ${env:LOAN_RENEWED_TOPIC_ARN_STG}
       RequestCreated: ${env:REQUEST_CREATED_TOPIC_ARN_STG}
       RequestPlacedOnShelf: ${env:LOAN_PLACED_ON_SHELF_TOPIC_ARN_STG}
+      RequestClosed: ${env:REQUEST_CLOSED_TOPIC_ARN_STG}
+      RequestCanceled: ${env:LOAN_CANCELED_TOPIC_ARN_STG}
     prod:
       LoanCreated: ${env:LOAN_CREATED_TOPIC_ARN_PROD}
       LoanDueDate: ${env:LOAN_DUE_DATE_TOPIC_ARN_PROD}
@@ -179,6 +194,8 @@ custom:
       LoanRenewed: ${env:LOAN_RENEWED_TOPIC_ARN_PROD}
       RequestCreated: ${env:REQUEST_CREATED_TOPIC_ARN_PROD}
       RequestPlacedOnShelf: ${env:LOAN_PLACED_ON_SHELF_TOPIC_ARN_PROD}
+      RequestClosed: ${env:REQUEST_CLOSED_TOPIC_ARN_PROD}
+      RequestCanceled: ${env:LOAN_CANCELED_TOPIC_ARN_PROD}
   TableArns:
     userCacheTable:
       "Fn::GetAtt": [userCacheTable, Arn]
