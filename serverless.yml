@@ -184,18 +184,18 @@ custom:
       LoanReturned: ${env:LOAN_RETURNED_TOPIC_ARN_STG}
       LoanRenewed: ${env:LOAN_RENEWED_TOPIC_ARN_STG}
       RequestCreated: ${env:REQUEST_CREATED_TOPIC_ARN_STG}
-      RequestPlacedOnShelf: ${env:LOAN_PLACED_ON_SHELF_TOPIC_ARN_STG}
+      RequestPlacedOnShelf: ${env:REQUEST_PLACED_ON_SHELF_TOPIC_ARN_STG}
       RequestClosed: ${env:REQUEST_CLOSED_TOPIC_ARN_STG}
-      RequestCanceled: ${env:LOAN_CANCELED_TOPIC_ARN_STG}
+      RequestCanceled: ${env:REQUEST_CANCELED_TOPIC_ARN_STG}
     prod:
       LoanCreated: ${env:LOAN_CREATED_TOPIC_ARN_PROD}
       LoanDueDate: ${env:LOAN_DUE_DATE_TOPIC_ARN_PROD}
       LoanReturned: ${env:LOAN_RETURNED_TOPIC_ARN_PROD}
       LoanRenewed: ${env:LOAN_RENEWED_TOPIC_ARN_PROD}
       RequestCreated: ${env:REQUEST_CREATED_TOPIC_ARN_PROD}
-      RequestPlacedOnShelf: ${env:LOAN_PLACED_ON_SHELF_TOPIC_ARN_PROD}
+      RequestPlacedOnShelf: ${env:REQUEST_PLACED_ON_SHELF_TOPIC_ARN_PROD}
       RequestClosed: ${env:REQUEST_CLOSED_TOPIC_ARN_PROD}
-      RequestCanceled: ${env:LOAN_CANCELED_TOPIC_ARN_PROD}
+      RequestCanceled: ${env:REQUEST_CANCELED_TOPIC_ARN_PROD}
   TableArns:
     userCacheTable:
       "Fn::GetAtt": [userCacheTable, Arn]
