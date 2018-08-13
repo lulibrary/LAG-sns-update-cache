@@ -1,5 +1,5 @@
 const Schemas = require('@lulibrary/lag-alma-utils')
-const Queue = require('@lulibrary/lag-utils/src/queue')
+const { Queue } = require('@lulibrary/lag-utils')
 
 const CacheItem = require('./cache-item')
 
