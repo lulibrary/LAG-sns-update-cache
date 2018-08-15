@@ -107,6 +107,9 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+        TimeToLiveSpecification:
+          AttributeName: expiry_date
+          Enabled: true
     loanCacheTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -118,7 +121,10 @@ resources:
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 5
-          WriteCapacityUnits: 5    
+          WriteCapacityUnits: 5
+        TimeToLiveSpecification:
+          AttributeName: expiry_date
+          Enabled: true
     requestCacheTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -131,6 +137,9 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+        TimeToLiveSpecification:
+          AttributeName: record_expiry_date
+          Enabled: true
     usersQueue:
       Type: AWS::SQS::Queue
       Properties:
