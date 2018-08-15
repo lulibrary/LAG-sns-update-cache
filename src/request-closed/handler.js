@@ -13,6 +13,7 @@ module.exports.handle = (event, context, callback) => {
         callback(null, generateSuccessMessage(requestData.user_request.request_id))
       })
       .catch(e => {
+        console.log(e)
         callback(new Error(`Failed to delete Request ${requestData.user_request.request_id} for User ${requestData.user_request.user_primary_id} in Cache`))
       })
   } catch (e) {

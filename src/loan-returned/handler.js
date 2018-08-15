@@ -13,6 +13,7 @@ module.exports.handle = (event, context, callback) => {
         callback(null, generateSuccessMessage(loanData.item_loan.loan_id))
       })
       .catch(e => {
+        console.log(e)
         callback(new Error(`Failed to delete Loan ${loanData.item_loan.loan_id} for User ${loanData.item_loan.user_id} in Cache`))
       })
   } catch (e) {
